@@ -80,19 +80,27 @@ void GlobeRenderer::buildSphere(int stacks, int slices) {
 }
 
 void GlobeRenderer::loadTextures() {
+    // Cap at 4K: the widget is small, and linear (no-mipmap) filtering on an
+    // 8K texture would shimmer. 4K is plenty sharp for <= ~1000 px on screen.
+    const int cap = qMin(m_tierMaxSize, 4096);
     auto make = [](const QImage &img) {
         auto t = std::make_unique<QOpenGLTexture>(img.flipped(Qt::Vertical));
-        t->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+        // Linear filtering, NO mipmaps. Mipmapping produces a dark vertical
+        // seam at the longitude wrap (the UV derivative explodes across the
+        // date line, forcing a 1x1 mip there). The equirectangular maps are
+        // seamless, so linear filtering renders the wrap cleanly.
+        t->setMinificationFilter(QOpenGLTexture::Linear);
         t->setMagnificationFilter(QOpenGLTexture::Linear);
         t->setWrapMode(QOpenGLTexture::Repeat);
-        t->generateMipMaps();
         return t;
     };
-    m_texDay     = make(m_assets->image(AssetManager::Day,      m_tierMaxSize));
-    m_texNight   = make(m_assets->image(AssetManager::Night,    m_tierMaxSize));
-    m_texClouds  = make(m_assets->image(AssetManager::Clouds,   m_tierMaxSize));
-    m_texNormal  = make(m_assets->image(AssetManager::Normal,   m_tierMaxSize));
-    m_texSpecular= make(m_assets->image(AssetManager::Specular, m_tierMaxSize));
+    m_texDay     = make(m_assets->image(AssetManager::Day,      cap));
+    m_texNight   = make(m_assets->image(AssetManager::Night,    cap));
+    m_texClouds  = make(m_assets->image(AssetManager::Clouds,   cap));
+    // Normal & specular maps disabled: they introduced an equator seam and a
+    // glassy look. The photoreal day/night/clouds look better matte. Revisit later.
+    // m_texNormal  = make(m_assets->image(AssetManager::Normal,   cap));
+    // m_texSpecular= make(m_assets->image(AssetManager::Specular, cap));
 }
 
 QMatrix4x4 GlobeRenderer::sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg) {

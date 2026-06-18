@@ -6,7 +6,7 @@ out vec4 FragColor;
 
 uniform sampler2D uDay;
 uniform sampler2D uNight;
-uniform sampler2D uNormal;    // tangent-space bump (terrain relief)
+uniform sampler2D uNormal;    // tangent-space bump (subtle terrain relief)
 uniform sampler2D uSpecular;  // water mask for ocean sun-glint
 uniform vec3  uSunDir;        // unit, world space (ECEF)
 uniform vec3  uViewPos;       // world-space camera position
@@ -20,10 +20,19 @@ void main() {
     vec2 uv = vUV;
     vec3 sun = normalize(uSunDir);
 
-    // Perturb the normal with the tangent-space normal map. Tangent basis is
-    // built from screen-space derivatives (no precomputed tangents), so the
-    // relief aligns to the actual UV mapping of the sphere.
-    vec3 N = baseN;
+    // Base day/night lighting from the GEOMETRIC normal so the surface can
+    // never go dark from a bad bump. This keeps the photoreal day map dominant.
+    float cosGeo = dot(baseN, sun);
+    float dayFactor = smoothstep(-0.10, 0.20, cosGeo);
+
+    vec3 day   = (uHasDay   > 0.5) ? texture(uDay,   uv).rgb : vec3(0.15, 0.35, 0.70);
+    vec3 night = (uHasNight > 0.5) ? texture(uNight, uv).rgb : vec3(0.0);
+
+    vec3 color = mix(night * 0.8, day, dayFactor);
+
+    // Subtle terrain relief: perturb the normal and apply only a gentle
+    // directional modulation on top of the base lighting (degenerate-guarded,
+    // blended with the geometric normal so no hard seam can form).
     if (uHasNormal > 0.5) {
         vec3 dp1 = dFdx(vWorld);
         vec3 dp2 = dFdy(vWorld);
@@ -38,31 +47,23 @@ void main() {
             float invmax = inversesqrt(det);
             mat3 TBN = mat3(T * invmax, B * invmax, baseN);
             vec3 bumped = normalize(TBN * (texture(uNormal, uv).xyz * 2.0 - 1.0));
-            // Blend with the geometric normal so relief stays subtle and no
-            // hard seam (e.g. at the equator/limb) can appear.
-            N = normalize(mix(baseN, bumped, 0.5));
+            bumped = normalize(mix(baseN, bumped, 0.6));
+            float relief = dot(bumped, sun) - cosGeo;   // +/- around the base
+            color *= 1.0 + 0.20 * relief;               // gentle shading only
         }
     }
 
-    float cosSun = dot(N, sun);
-    float dayFactor = smoothstep(-0.10, 0.20, cosSun);
-
-    vec3 day   = (uHasDay   > 0.5) ? texture(uDay,   uv).rgb : vec3(0.15, 0.35, 0.70);
-    vec3 night = (uHasNight > 0.5) ? texture(uNight, uv).rgb : vec3(0.0);
-
-    vec3 color = mix(night * 0.8, day, dayFactor);
-
     // warm twilight tint near the terminator
-    float twi = dayFactor * (1.0 - smoothstep(0.18, 0.40, cosSun));
+    float twi = dayFactor * (1.0 - smoothstep(0.18, 0.40, cosGeo));
     color += vec3(0.18, 0.08, 0.0) * twi;
 
-    // ocean specular glint (Blinn-Phong) masked by water
+    // Subtle ocean sun-glint (Blinn-Phong on the geometric normal, water only).
     if (uHasSpecular > 0.5 && dayFactor > 0.05) {
         float water = texture(uSpecular, uv).r;
         vec3 viewDir = normalize(uViewPos - vWorld);
         vec3 H = normalize(sun + viewDir);
-        float spec = pow(max(dot(N, H), 0.0), 60.0) * water * dayFactor;
-        color += vec3(0.9, 0.95, 1.0) * spec;
+        float spec = pow(max(dot(baseN, H), 0.0), 80.0) * water * dayFactor;
+        color += vec3(0.6, 0.7, 0.85) * spec * 0.5;
     }
 
     FragColor = vec4(color, 1.0);
