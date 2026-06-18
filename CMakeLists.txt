@@ -24,6 +24,8 @@ qt_add_library(globe_lib STATIC
     src/globe/render/AssetManager.cpp
     src/globe/render/GlobeRenderer.h
     src/globe/render/GlobeRenderer.cpp
+    src/globe/render/GlobeView.h
+    src/globe/render/GlobeView.cpp
     src/globe/render/shaders.qrc
 )
 

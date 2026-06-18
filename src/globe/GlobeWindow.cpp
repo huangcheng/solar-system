@@ -1,16 +1,11 @@
 #include "GlobeWindow.h"
-#include <QPainter>
-#include <QPaintEvent>
+#include <QVBoxLayout>
 
-GlobeWindow::GlobeWindow(QWidget *parent) : QWidget(parent) {
+GlobeWindow::GlobeWindow(QWidget *parent)
+    : QWidget(parent), m_view(new GlobeView(this)) {
     setAttribute(Qt::WA_TranslucentBackground);
+    auto *lay = new QVBoxLayout(this);
+    lay->setContentsMargins(0, 0, 0, 0);
+    lay->addWidget(m_view);
     resize(360, 360);
-}
-
-void GlobeWindow::paintEvent(QPaintEvent *) {
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setBrush(QColor(20, 40, 90));
-    p.setPen(Qt::NoPen);
-    p.drawEllipse(rect());
 }
