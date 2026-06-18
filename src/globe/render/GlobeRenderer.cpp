@@ -96,7 +96,8 @@ void GlobeRenderer::loadTextures() {
     };
     m_texDay     = make(m_assets->image(AssetManager::Day,      cap));
     m_texNight   = make(m_assets->image(AssetManager::Night,    cap));
-    m_texClouds  = make(m_assets->image(AssetManager::Clouds,   cap));
+    // Cloud layer disabled on request.
+    // m_texClouds  = make(m_assets->image(AssetManager::Clouds,   cap));
     // Normal & specular maps disabled: they introduced an equator seam and a
     // glassy look. The photoreal day/night/clouds look better matte. Revisit later.
     // m_texNormal  = make(m_assets->image(AssetManager::Normal,   cap));
@@ -189,18 +190,21 @@ void GlobeRenderer::render() {
     m_gl->glBindVertexArray(m_vao);
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
 
-    // Clouds (slightly larger, slow spin)
-    QMatrix4x4 cmodel = model;
-    cmodel.scale(1.01f);
-    const float spin = std::fmod(float(QDateTime::currentMSecsSinceEpoch()) * 1e-5f, 360.0f);
-    cmodel.rotate(spin, 0.0f, 0.0f, 1.0f);
-    m_cloudProg->bind();
-    m_cloudProg->setUniformValue("uMVP", proj * view * cmodel);
-    m_cloudProg->setUniformValue("uModel", cmodel);
-    m_cloudProg->setUniformValue("uSunDir", sun);
-    m_cloudProg->setUniformValue("uHasClouds", m_texClouds ? 1.0f : 0.0f);
-    if (m_texClouds) { m_texClouds->bind(2); m_cloudProg->setUniformValue("uClouds", 2); }
-    m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
+    // Clouds (slightly larger, slow spin) — skipped when the layer is disabled.
+    if (m_texClouds) {
+        QMatrix4x4 cmodel = model;
+        cmodel.scale(1.01f);
+        const float spin = std::fmod(float(QDateTime::currentMSecsSinceEpoch()) * 1e-5f, 360.0f);
+        cmodel.rotate(spin, 0.0f, 0.0f, 1.0f);
+        m_cloudProg->bind();
+        m_cloudProg->setUniformValue("uMVP", proj * view * cmodel);
+        m_cloudProg->setUniformValue("uModel", cmodel);
+        m_cloudProg->setUniformValue("uSunDir", sun);
+        m_cloudProg->setUniformValue("uHasClouds", 1.0f);
+        m_texClouds->bind(2);
+        m_cloudProg->setUniformValue("uClouds", 2);
+        m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
+    }
 
     // Atmosphere (thin back-face shell). Keep depth test ON (enabled by the
     // earth pass) with depth writes off so the Earth occludes the inner shell
