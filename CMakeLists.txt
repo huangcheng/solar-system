@@ -34,7 +34,6 @@ qt_add_library(globe_lib STATIC
     src/globe/render/GlobeView.cpp
     src/globe/render/TimeController.h
     src/globe/render/TimeController.cpp
-    src/globe/render/shaders.qrc
 )
 
 target_include_directories(globe_lib PUBLIC

@@ -1,12 +1,14 @@
 #pragma once
 #include <QImage>
 #include <QString>
+#include <QStringList>
 
 class ConfigManager;
 
-// Loads day/night/cloud textures from disk, downscaling to the active quality
-// tier. Missing files are replaced with procedural fallbacks so the widget
-// always renders. Only produces QImages; the renderer uploads to GL.
+// Loads day/night/cloud textures from disk (never from the Qt resource system
+// — HD images stay as loose files to keep the binary small). It searches a list
+// of candidate directories in order and uses the first file it finds; missing
+// files fall back to procedural images so the widget always renders.
 class AssetManager {
 public:
     enum Slot { Day = 0, Night = 1, Clouds = 2 };
@@ -17,7 +19,8 @@ public:
     bool hasFile(Slot slot) const;
 
 private:
-    QString m_dir;
-    QString pathFor(Slot slot) const;
+    QStringList m_dirs;                 // searched in order
+    QString pathFor(Slot slot) const;   // first existing file across m_dirs
+    static QString fileName(Slot slot);
     static QImage fallback(Slot slot);
 };

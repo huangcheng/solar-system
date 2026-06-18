@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Globe");
 
     ConfigManager config;
-    AssetManager assets(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/textures");
+    AssetManager assets;  // loads from <exedir>/textures (shipped), then user-local, then procedural fallback
     SunModel sun;
     CameraController camera;
 

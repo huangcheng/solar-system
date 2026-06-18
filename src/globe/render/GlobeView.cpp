@@ -1,5 +1,6 @@
 #include "GlobeView.h"
 #include <QSurfaceFormat>
+#include <QOpenGLContext>
 
 GlobeView::GlobeView(QWidget *parent) : QOpenGLWidget(parent) {
     QSurfaceFormat fmt;
@@ -14,7 +15,8 @@ GlobeView::~GlobeView() { makeCurrent(); }
 
 void GlobeView::initializeGL() {
     m_gl = std::make_unique<QOpenGLFunctions_3_3_Core>();
-    m_gl->initializeOpenGLFunctions();
+    if (!m_gl->initializeOpenGLFunctions())
+        qWarning("GlobeView: failed to resolve OpenGL 3.3 core functions");
     m_renderer.initialize(m_gl.get());
 }
 

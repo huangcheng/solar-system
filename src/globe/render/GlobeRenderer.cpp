@@ -1,22 +1,49 @@
 #include "GlobeRenderer.h"
 #include <QOpenGLShader>
 #include <QDateTime>
+#include <QDebug>
+#include <QFile>
+#include <QCoreApplication>
+#include <QIODevice>
 #include <QVector>
 #include <cmath>
 
 namespace {
 constexpr double kPi = 3.14159265358979323846;
-}
 
-GlobeRenderer::GlobeRenderer() = default;
+// Load a GLSL source file from disk. Searches a few candidate directories so
+// the same code works for an installed app (<exedir>/shaders), a dev build
+// (../src/globe/render/shaders), and a legacy Qt resource (:/shaders).
+QByteArray loadShaderSource(const QString &name) {
+    const QStringList dirs = {
+        QCoreApplication::applicationDirPath() + "/shaders",
+        QCoreApplication::applicationDirPath() + "/../src/globe/render/shaders",
+        QCoreApplication::applicationDirPath() + "/../../src/globe/render/shaders",
+        QStringLiteral(":/shaders"),
+    };
+    for (const QString &d : dirs) {
+        QFile f(d + "/" + name);
+        if (f.open(QIODevice::ReadOnly | QIODevice::Text))
+            return f.readAll();
+    }
+    return {};
+}
+}
 
 std::unique_ptr<QOpenGLShaderProgram> GlobeRenderer::makeProgram(const QString &vert, const QString &frag) {
     auto p = std::make_unique<QOpenGLShaderProgram>();
-    p->addShaderFromSourceFile(QOpenGLShader::Vertex,   ":/shaders/" + vert);
-    p->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/" + frag);
-    p->link();
+    const QByteArray vsrc = loadShaderSource(vert);
+    const QByteArray fsrc = loadShaderSource(frag);
+    if (vsrc.isEmpty() || fsrc.isEmpty())
+        qWarning().nospace() << "[shader] missing source: " << vert << "(" << vsrc.size() << ") " << frag << "(" << fsrc.size() << ")";
+    p->addShaderFromSourceCode(QOpenGLShader::Vertex,   QString::fromUtf8(vsrc));
+    p->addShaderFromSourceCode(QOpenGLShader::Fragment, QString::fromUtf8(fsrc));
+    if (!p->link())
+        qWarning().nospace() << "[shader] link failed for " << vert << "/" << frag << ": " << p->log();
     return p;
 }
+
+GlobeRenderer::GlobeRenderer() = default;
 
 void GlobeRenderer::buildSphere(int stacks, int slices) {
     QVector<float> verts; QVector<GLuint> idx;

@@ -1,20 +1,35 @@
 #include "AssetManager.h"
 #include <QFile>
 #include <QStandardPaths>
+#include <QCoreApplication>
 
 AssetManager::AssetManager(QString dir) {
-    if (dir.isEmpty())
-        dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/textures";
-    m_dir = dir;
+    // Search order: explicit dir, then the folder next to the binary (where the
+    // installer ships HD textures), then the user-local cache (where the fetch
+    // script / low-VRAM downscales live).
+    if (!dir.isEmpty()) m_dirs.append(dir);
+    m_dirs.append(QCoreApplication::applicationDirPath() + "/textures");
+    m_dirs.append(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/textures");
+}
+
+QString AssetManager::fileName(Slot slot) {
+    switch (slot) {
+    case Day:    return QStringLiteral("day.jpg");
+    case Night:  return QStringLiteral("night.jpg");
+    case Clouds: return QStringLiteral("clouds.png");
+    }
+    return {};
 }
 
 QString AssetManager::pathFor(Slot slot) const {
-    switch (slot) {
-    case Day:    return m_dir + "/day.jpg";
-    case Night:  return m_dir + "/night.jpg";
-    case Clouds: return m_dir + "/clouds.png";
+    const QString name = fileName(slot);
+    for (const QString &d : m_dirs) {
+        const QString p = d + QLatin1Char('/') + name;
+        if (QFile::exists(p)) return p;
     }
-    return {};
+    // Nothing found: return a (nonexistent) path; the loader falls back to a
+    // procedural image.
+    return m_dirs.constFirst() + QLatin1Char('/') + name;
 }
 
 bool AssetManager::hasFile(Slot slot) const {
