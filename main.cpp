@@ -1,5 +1,6 @@
 #include "globe/GlobeWindow.h"
 #include "globe/ConfigManager.h"
+#include "globe/SystemTray.h"
 #include "render/SunModel.h"
 #include "render/CameraController.h"
 #include "render/AssetManager.h"
@@ -27,6 +28,17 @@ int main(int argc, char *argv[]) {
     TimeController time(&sun);
     time.setTarget(w.view());
     time.setFpsCap(config.fpsCap());
+
+    w.setConfig(&config);
+
+    SystemTray tray;
+    QObject::connect(&tray, &SystemTray::toggleVisibility, &w,
+        [&w] { w.isVisible() ? w.hide() : w.show(); });
+    QObject::connect(&tray, &SystemTray::resetView, &w, [&w, &camera] {
+        camera.reset();
+        w.resize(360, 360);
+        w.view()->update();
+    });
 
     w.show();
     return app.exec();

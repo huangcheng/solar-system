@@ -4,6 +4,7 @@
 #include "render/GlobeView.h"
 
 class CameraController;
+class ConfigManager;
 
 class GlobeWindow : public QWidget {
     Q_OBJECT
@@ -11,6 +12,7 @@ public:
     explicit GlobeWindow(QWidget *parent = nullptr);
     GlobeView *view() { return m_view; }
     void setCameraController(CameraController *c) { m_cam = c; }
+    void setConfig(ConfigManager *c) { m_config = c; }
 protected:
     void paintEvent(QPaintEvent *) override {}
     void showEvent(QShowEvent *) override;
@@ -22,5 +24,6 @@ protected:
 private:
     GlobeView *m_view;
     CameraController *m_cam = nullptr;
+    ConfigManager *m_config = nullptr;
     QPoint m_lastPos;
 };

@@ -1,5 +1,6 @@
 #include "GlobeWindow.h"
 #include "PlatformWindow.h"
+#include "ConfigManager.h"
 #include "render/CameraController.h"
 #include <QVBoxLayout>
 #include <QRegion>
@@ -49,6 +50,11 @@ void GlobeWindow::mouseMoveEvent(QMouseEvent *e) {
     if (moveGesture) {
         move(pos() + g - m_lastPos);
         m_lastPos = g;
+        if (m_config) {
+            m_config->setWindowX(pos().x());
+            m_config->setWindowY(pos().y());
+            m_config->save();
+        }
     } else if ((e->buttons() & Qt::LeftButton) && m_cam) {
         const QPoint d = g - m_lastPos;
         m_lastPos = g;

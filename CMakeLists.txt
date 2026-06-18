@@ -14,6 +14,8 @@ qt_standard_project_setup()
 qt_add_library(globe_lib STATIC
     src/globe/GlobeWindow.h
     src/globe/GlobeWindow.cpp
+    src/globe/SystemTray.h
+    src/globe/SystemTray.cpp
     src/globe/PlatformWindow.h
     src/globe/PlatformWindow.cpp
     src/globe/ConfigManager.h
