@@ -11,8 +11,8 @@ void main() {
     vec3 viewDir = normalize(uViewPos - vWorld);
     float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
     float sun = smoothstep(-0.3, 0.3, dot(n, normalize(uSunDir)));
-    vec3 dayGlow   = vec3(0.35, 0.6, 1.0);
-    vec3 nightGlow = vec3(0.05, 0.08, 0.18);
-    vec3 col = mix(nightGlow, dayGlow, sun) * rim;
-    FragColor = vec4(col, rim * (0.4 + 0.6 * sun));
+    vec3 dayGlow   = vec3(0.38, 0.62, 1.0);
+    vec3 nightGlow = vec3(0.08, 0.12, 0.24);
+    vec3 col = mix(nightGlow, dayGlow, sun) * rim * 1.5;
+    FragColor = vec4(col, clamp(rim * (0.45 + 0.7 * sun) * 1.5, 0.0, 1.0));
 }
