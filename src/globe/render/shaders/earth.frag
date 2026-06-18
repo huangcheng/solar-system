@@ -24,16 +24,20 @@ void main() {
     vec3 sun = normalize(uSunDir);
 
     float cosSun = dot(n, sun);
-    float dayFactor = smoothstep(-0.10, 0.20, cosSun);
+    // Broad, soft day/night transition so there's no hard border at the terminator.
+    float dayFactor = smoothstep(-0.45, 0.55, cosSun);
 
     vec3 day   = (uHasDay   > 0.5) ? texture(uDay,   uv).rgb : vec3(0.15, 0.35, 0.70);
     vec3 night = (uHasNight > 0.5) ? texture(uNight, uv).rgb : vec3(0.0);
 
-    vec3 color = mix(night * 0.8, day, dayFactor);
+    // Faint ambient on the dark side (earthshine / airglow) so the night side
+    // isn't near-black; this drops the day/night contrast and softens the edge.
+    vec3 darkSide = night * 0.8 + day * 0.05 + vec3(0.012, 0.018, 0.035);
+    vec3 color = mix(darkSide, day, dayFactor);
 
-    // warm twilight at the terminator
-    float twi = dayFactor * (1.0 - smoothstep(0.18, 0.40, cosSun));
-    color += vec3(0.18, 0.08, 0.0) * twi;
+    // broad warm twilight belt centered on the terminator (cosSun ~ 0)
+    float twi = smoothstep(-0.45, 0.0, cosSun) * (1.0 - smoothstep(0.0, 0.55, cosSun));
+    color += vec3(0.30, 0.13, 0.0) * twi;
 
     FragColor = vec4(color, 1.0);
 }
