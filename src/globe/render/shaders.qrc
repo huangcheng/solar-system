@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="/shaders">
+    <file alias="earth.vert">shaders/earth.vert</file>
+    <file alias="earth.frag">shaders/earth.frag</file>
+    <file alias="clouds.vert">shaders/clouds.vert</file>
+    <file alias="clouds.frag">shaders/clouds.frag</file>
+    <file alias="atmosphere.vert">shaders/atmosphere.vert</file>
+    <file alias="atmosphere.frag">shaders/atmosphere.frag</file>
+  </qresource>
+</RCC>
