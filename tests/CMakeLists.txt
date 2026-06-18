@@ -12,3 +12,5 @@ globe_add_test(test_sunmodel)
 
 globe_add_test(test_cameracontroller)
 globe_add_test(test_sunview)
+
+globe_add_test(test_locationprovider)

@@ -20,6 +20,8 @@ qt_add_library(globe_lib STATIC
     src/globe/PlatformWindow.cpp
     src/globe/ConfigManager.h
     src/globe/ConfigManager.cpp
+    src/globe/LocationProvider.h
+    src/globe/LocationProvider.cpp
     src/globe/render/SunModel.h
     src/globe/render/SunModel.cpp
     src/globe/render/CameraController.h
