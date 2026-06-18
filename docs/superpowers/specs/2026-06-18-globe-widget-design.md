@@ -209,8 +209,11 @@ Driven by `LocationProvider` (opt-in):
   cloud-fetch is added; not needed for v1).
 - Source layout mirrors Seelie's clean separation, e.g.
   `src/globe/{globeview,globerenderer,sunmodel,cameracontroller,locationprovider,configmanager,...}.cpp/.h`.
-- C++17, cross-platform (Windows / macOS / Linux). Deployment via
-  `windeployqt` / `macdeployqt` / AppImage tooling later.
+- C++17, cross-platform (Windows / macOS / Linux). Deployment later:
+  - **Windows:** `windeployqt` to gather Qt DLLs, then an **Inno Setup**
+    installer (chosen over Qt IFW — easier to author and maintain).
+  - **macOS:** `macdeployqt` → `.app` bundle / DMG.
+  - **Linux:** AppImage tooling.
 
 ## 10. Testing & Error Handling
 
@@ -244,5 +247,5 @@ Driven by `LocationProvider` (opt-in):
 
 - Optional live cloud imagery fetch (would re-enable the `Network` module).
 - Custom texture packs / theme switching.
-- Installer packaging (`windeployqt` + IFW, DMG, AppImage).
+- Installer packaging (Inno Setup on Windows, DMG on macOS, AppImage on Linux).
 - Specular ocean glint and physically-based atmosphere as a later quality pass.
