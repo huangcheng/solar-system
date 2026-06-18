@@ -40,7 +40,7 @@ private:
     bool m_useCenterLon = false;
 
     std::unique_ptr<QOpenGLShaderProgram> m_earthProg, m_cloudProg, m_atmoProg;
-    std::unique_ptr<QOpenGLTexture> m_texDay, m_texNight, m_texClouds;
+    std::unique_ptr<QOpenGLTexture> m_texDay, m_texNight, m_texClouds, m_texNormal, m_texSpecular;
     GLuint m_vao = 0, m_vbo = 0, m_ibo = 0;
     int m_indexCount = 0;
     float m_aspect = 1.0f;

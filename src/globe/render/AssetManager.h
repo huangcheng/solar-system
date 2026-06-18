@@ -11,7 +11,7 @@ class ConfigManager;
 // files fall back to procedural images so the widget always renders.
 class AssetManager {
 public:
-    enum Slot { Day = 0, Night = 1, Clouds = 2 };
+    enum Slot { Day = 0, Night = 1, Clouds = 2, Normal = 3, Specular = 4 };
 
     explicit AssetManager(QString dir = QString());
 

@@ -88,9 +88,11 @@ void GlobeRenderer::loadTextures() {
         t->generateMipMaps();
         return t;
     };
-    m_texDay   = make(m_assets->image(AssetManager::Day,    m_tierMaxSize));
-    m_texNight = make(m_assets->image(AssetManager::Night,  m_tierMaxSize));
-    m_texClouds= make(m_assets->image(AssetManager::Clouds, m_tierMaxSize));
+    m_texDay     = make(m_assets->image(AssetManager::Day,      m_tierMaxSize));
+    m_texNight   = make(m_assets->image(AssetManager::Night,    m_tierMaxSize));
+    m_texClouds  = make(m_assets->image(AssetManager::Clouds,   m_tierMaxSize));
+    m_texNormal  = make(m_assets->image(AssetManager::Normal,   m_tierMaxSize));
+    m_texSpecular= make(m_assets->image(AssetManager::Specular, m_tierMaxSize));
 }
 
 QMatrix4x4 GlobeRenderer::sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg) {
@@ -135,11 +137,14 @@ void GlobeRenderer::setQualityTier(int maxSize) {
     if (maxSize == m_tierMaxSize) return;
     m_tierMaxSize = maxSize;
     m_texDay.reset(); m_texNight.reset(); m_texClouds.reset();
+    m_texNormal.reset(); m_texSpecular.reset();
     if (m_gl && m_assets) loadTextures();
 }
 
 void GlobeRenderer::render() {
     if (!m_gl) return;
+    // Opaque "space" background — the widget is a solid disc, not see-through.
+    m_gl->glClearColor(0.02f, 0.03f, 0.05f, 1.0f);
     m_gl->glEnable(GL_MULTISAMPLE);
     m_gl->glEnable(GL_BLEND);
     m_gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -164,10 +169,15 @@ void GlobeRenderer::render() {
     m_earthProg->setUniformValue("uMVP", proj * view * model);
     m_earthProg->setUniformValue("uModel", model);
     m_earthProg->setUniformValue("uSunDir", sun);
+    m_earthProg->setUniformValue("uViewPos", QVector3D(0, 0, 3));
     m_earthProg->setUniformValue("uHasDay", m_texDay ? 1.0f : 0.0f);
     m_earthProg->setUniformValue("uHasNight", m_texNight ? 1.0f : 0.0f);
-    if (m_texDay)   { m_texDay->bind(0);   m_earthProg->setUniformValue("uDay", 0); }
-    if (m_texNight) { m_texNight->bind(1); m_earthProg->setUniformValue("uNight", 1); }
+    m_earthProg->setUniformValue("uHasNormal", m_texNormal ? 1.0f : 0.0f);
+    m_earthProg->setUniformValue("uHasSpecular", m_texSpecular ? 1.0f : 0.0f);
+    if (m_texDay)     { m_texDay->bind(0);       m_earthProg->setUniformValue("uDay", 0); }
+    if (m_texNight)   { m_texNight->bind(1);     m_earthProg->setUniformValue("uNight", 1); }
+    if (m_texNormal)  { m_texNormal->bind(3);    m_earthProg->setUniformValue("uNormal", 3); }
+    if (m_texSpecular){ m_texSpecular->bind(4);  m_earthProg->setUniformValue("uSpecular", 4); }
     m_gl->glBindVertexArray(m_vao);
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
 

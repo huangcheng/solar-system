@@ -5,18 +5,21 @@
 
 AssetManager::AssetManager(QString dir) {
     // Search order: explicit dir, then the folder next to the binary (where the
-    // installer ships HD textures), then the user-local cache (where the fetch
-    // script / low-VRAM downscales live).
+    // installer ships HD textures), then the dev tree (../textures when running
+    // from the build dir), then the user-local cache.
     if (!dir.isEmpty()) m_dirs.append(dir);
     m_dirs.append(QCoreApplication::applicationDirPath() + "/textures");
+    m_dirs.append(QCoreApplication::applicationDirPath() + "/../textures");
     m_dirs.append(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/textures");
 }
 
 QString AssetManager::fileName(Slot slot) {
     switch (slot) {
-    case Day:    return QStringLiteral("day.jpg");
-    case Night:  return QStringLiteral("night.jpg");
-    case Clouds: return QStringLiteral("clouds.png");
+    case Day:      return QStringLiteral("day.jpg");
+    case Night:    return QStringLiteral("night.jpg");
+    case Clouds:   return QStringLiteral("clouds.png");
+    case Normal:   return QStringLiteral("normal.png");
+    case Specular: return QStringLiteral("specular.png");
     }
     return {};
 }

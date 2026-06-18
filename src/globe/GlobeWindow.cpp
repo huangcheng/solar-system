@@ -13,9 +13,9 @@ GlobeWindow::GlobeWindow(QWidget *parent)
     : QWidget(parent), m_view(new GlobeView(this)) {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
                    Qt::Tool | Qt::WindowDoesNotAcceptFocus);
-    setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
-    setAttribute(Qt::WA_NoSystemBackground);
+    // Opaque widget (solid disc on the desktop), not transparent.
+    setAttribute(Qt::WA_OpaquePaintEvent, true);
 #ifdef Q_OS_MAC
     setAttribute(Qt::WA_MacAlwaysShowToolWindow, true);
 #endif
