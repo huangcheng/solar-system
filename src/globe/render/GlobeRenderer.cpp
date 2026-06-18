@@ -79,9 +79,10 @@ QMatrix4x4 GlobeRenderer::sunCentricBaseRotation(double subSolarLatDeg, double s
 }
 
 QMatrix4x4 GlobeRenderer::baseRotation() const {
-    if (m_sun)
-        return sunCentricBaseRotation(m_sun->subSolarLatitude(), m_sun->subSolarLongitude());
-    return {};
+    if (!m_sun) return {};
+    if (m_useCenterLon)
+        return sunCentricBaseRotation(0.0, m_centerLon); // home meridian at +Z
+    return sunCentricBaseRotation(m_sun->subSolarLatitude(), m_sun->subSolarLongitude());
 }
 
 void GlobeRenderer::initialize(QOpenGLFunctions_3_3_Core *gl) {

@@ -7,6 +7,7 @@
 #include "render/TimeController.h"
 #include <QApplication>
 #include <QStandardPaths>
+#include <QTimer>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
@@ -36,9 +37,28 @@ int main(int argc, char *argv[]) {
         [&w] { w.isVisible() ? w.hide() : w.show(); });
     QObject::connect(&tray, &SystemTray::resetView, &w, [&w, &camera] {
         camera.reset();
+        w.view()->renderer().clearCenterLongitude();
         w.resize(360, 360);
         w.view()->update();
     });
+    QObject::connect(&tray, &SystemTray::centerOnMe, &w, [&w, &camera, &config] {
+        camera.reset();
+        w.view()->renderer().setCenterLongitude(config.homeLongitude());
+        w.resize(360, 360);
+        w.view()->update();
+    });
+
+    // Live solar tooltip: refresh the tray with the current sun sub-point.
+    auto refreshTooltip = [&sun, &tray] {
+        sun.setUtc(QDateTime::currentDateTimeUtc());
+        tray.setSolarTooltip(GlobeWindow::tr("Sun sub-point: %1°, %2°")
+            .arg(sun.subSolarLatitude(), 0, 'f', 1)
+            .arg(sun.subSolarLongitude(), 0, 'f', 1));
+    };
+    refreshTooltip();
+    QTimer tooltipTimer;
+    QObject::connect(&tooltipTimer, &QTimer::timeout, &w, refreshTooltip);
+    tooltipTimer.start(300000); // every 5 min
 
     w.show();
     return app.exec();

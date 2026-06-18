@@ -11,6 +11,7 @@ SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
     auto *menu = new QMenu;
     menu->addAction(tr("Hide/Show"), this, &SystemTray::toggleVisibility);
     menu->addAction(tr("Reset View"), this, &SystemTray::resetView);
+    menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
     menu->addSeparator();
     menu->addAction(tr("About"), this, [] {
         // v1: About is a tray message. A real dialog can replace this later.

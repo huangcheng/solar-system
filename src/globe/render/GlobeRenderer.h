@@ -20,6 +20,12 @@ public:
     void setQualityTier(int maxSize);
     void render();
 
+    // "Center on me": lock the view over a specific longitude (home meridian)
+    // at the equator, while lighting still reflects the real sun direction.
+    // clearCenterLongitude() returns to the sun-centric default.
+    void setCenterLongitude(double lon) { m_centerLon = lon; m_useCenterLon = true; }
+    void clearCenterLongitude() { m_useCenterLon = false; }
+
     // Pure, GL-free sun-centric rotation: maps the sub-solar point (lat,lon)
     // onto +Z so the lit hemisphere faces the camera. Unit-testable.
     static QMatrix4x4 sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg);
@@ -30,6 +36,8 @@ private:
     const SunModel *m_sun = nullptr;
     const CameraController *m_cam = nullptr;
     int m_tierMaxSize = 8192;
+    double m_centerLon = 0.0;
+    bool m_useCenterLon = false;
 
     std::unique_ptr<QOpenGLShaderProgram> m_earthProg, m_cloudProg, m_atmoProg;
     std::unique_ptr<QOpenGLTexture> m_texDay, m_texNight, m_texClouds;
