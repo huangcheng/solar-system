@@ -18,6 +18,8 @@ qt_add_library(globe_lib STATIC
     src/globe/ConfigManager.cpp
     src/globe/render/SunModel.h
     src/globe/render/SunModel.cpp
+    src/globe/render/CameraController.h
+    src/globe/render/CameraController.cpp
 )
 
 target_include_directories(globe_lib PUBLIC
