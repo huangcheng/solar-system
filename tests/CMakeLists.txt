@@ -7,3 +7,5 @@ function(globe_add_test name)
 endfunction()
 
 globe_add_test(test_configmanager)
+
+globe_add_test(test_sunmodel)

@@ -16,11 +16,14 @@ qt_add_library(globe_lib STATIC
     src/globe/GlobeWindow.cpp
     src/globe/ConfigManager.h
     src/globe/ConfigManager.cpp
+    src/globe/render/SunModel.h
+    src/globe/render/SunModel.cpp
 )
 
 target_include_directories(globe_lib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/globe
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/globe/render
 )
 
 target_link_libraries(globe_lib PUBLIC
