@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
     w.view()->renderer().setAssets(&assets);
     w.view()->renderer().setSun(&sun);
     w.view()->renderer().setCamera(&camera);
+    w.setCameraController(&camera);
     w.move(config.windowX(), config.windowY());
     w.resize(config.diameter(), config.diameter());
 
