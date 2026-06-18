@@ -5,7 +5,9 @@ out vec4 FragColor;
 uniform vec3 uSunDir;
 uniform vec3 uViewPos;
 void main() {
-    vec3 n = normalize(vLocal);
+    // World-space normal (sphere centered at model origin): normalize the
+    // world position so both n and viewDir are in the same (world) frame.
+    vec3 n = normalize(vWorld);
     vec3 viewDir = normalize(uViewPos - vWorld);
     float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
     float sun = smoothstep(-0.3, 0.3, dot(n, normalize(uSunDir)));

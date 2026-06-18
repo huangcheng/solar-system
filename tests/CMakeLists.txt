@@ -11,3 +11,4 @@ globe_add_test(test_configmanager)
 globe_add_test(test_sunmodel)
 
 globe_add_test(test_cameracontroller)
+globe_add_test(test_sunview)

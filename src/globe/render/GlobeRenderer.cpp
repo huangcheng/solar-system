@@ -66,19 +66,22 @@ void GlobeRenderer::loadTextures() {
     m_texClouds= make(m_assets->image(AssetManager::Clouds, m_tierMaxSize));
 }
 
-QMatrix4x4 GlobeRenderer::baseRotation() const {
-    // Sun-centric: map the sub-solar point (lat, lon) onto +Z so the sunlit
-    // hemisphere faces the camera. Rz(-lon) brings the sub-solar longitude to
-    // the +X axis, leaving the point at (cosLat, 0, sinLat); Ry(lat-90) then
-    // maps that point exactly onto +Z (verified: x'->0, z'->1).
+QMatrix4x4 GlobeRenderer::sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg) {
+    // QMatrix4x4::rotate() post-multiplies, so the calls below compose
+    // M = Ry(lat-90) * Rz(-lon), i.e. Rz is applied to the vertex first.
+    // Rz(-lon) brings the sub-solar longitude to the +X axis, leaving the
+    // sub-solar point at (cosLat, 0, sinLat); Ry(lat-90) then maps it onto +Z.
+    // Verified: maps sunDirection(lat,lon) -> (0,0,1) for all (lat,lon).
     QMatrix4x4 m;
-    if (m_sun) {
-        const float lon = float(m_sun->subSolarLongitude());
-        const float lat = float(m_sun->subSolarLatitude());
-        m.rotate(-lon, 0.0f, 0.0f, 1.0f);
-        m.rotate(lat - 90.0f, 0.0f, 1.0f, 0.0f);
-    }
+    m.rotate(float(subSolarLatDeg) - 90.0f, 0.0f, 1.0f, 0.0f);
+    m.rotate(-float(subSolarLonDeg),        0.0f, 0.0f, 1.0f);
     return m;
+}
+
+QMatrix4x4 GlobeRenderer::baseRotation() const {
+    if (m_sun)
+        return sunCentricBaseRotation(m_sun->subSolarLatitude(), m_sun->subSolarLongitude());
+    return {};
 }
 
 void GlobeRenderer::initialize(QOpenGLFunctions_3_3_Core *gl) {
@@ -143,7 +146,8 @@ void GlobeRenderer::render() {
     // Clouds (slightly larger, slow spin)
     QMatrix4x4 cmodel = model;
     cmodel.scale(1.01f);
-    cmodel.rotate(float(QDateTime::currentDateTime().toMSecsSinceEpoch() * 0.00001), 0.0f, 0.0f, 1.0f);
+    const float spin = std::fmod(float(QDateTime::currentMSecsSinceEpoch()) * 1e-5f, 360.0f);
+    cmodel.rotate(spin, 0.0f, 0.0f, 1.0f);
     m_cloudProg->bind();
     m_cloudProg->setUniformValue("uMVP", proj * view * cmodel);
     m_cloudProg->setUniformValue("uModel", cmodel);
@@ -152,11 +156,12 @@ void GlobeRenderer::render() {
     if (m_texClouds) { m_texClouds->bind(2); m_cloudProg->setUniformValue("uClouds", 2); }
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
 
-    // Atmosphere (back-face shell)
-    m_gl->glDisable(GL_DEPTH_TEST);
+    // Atmosphere (thin back-face shell). Keep depth test ON (enabled by the
+    // earth pass) with depth writes off so the Earth occludes the inner shell
+    // and only the silhouette limb glow is rasterized.
     m_gl->glDepthMask(GL_FALSE);
-    QMatrix4x4 amodel = offset * base;
-    amodel.scale(zoom * 1.06f);
+    QMatrix4x4 amodel = offset * baseRotation();
+    amodel.scale(zoom * 1.015f);
     m_atmoProg->bind();
     m_atmoProg->setUniformValue("uMVP", proj * view * amodel);
     m_atmoProg->setUniformValue("uModel", amodel);

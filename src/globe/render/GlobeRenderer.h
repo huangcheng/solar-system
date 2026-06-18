@@ -20,6 +20,10 @@ public:
     void setQualityTier(int maxSize);
     void render();
 
+    // Pure, GL-free sun-centric rotation: maps the sub-solar point (lat,lon)
+    // onto +Z so the lit hemisphere faces the camera. Unit-testable.
+    static QMatrix4x4 sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg);
+
 private:
     QOpenGLFunctions_3_3_Core *m_gl = nullptr;
     AssetManager *m_assets = nullptr;
