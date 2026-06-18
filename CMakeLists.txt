@@ -20,6 +20,8 @@ qt_add_library(globe_lib STATIC
     src/globe/render/SunModel.cpp
     src/globe/render/CameraController.h
     src/globe/render/CameraController.cpp
+    src/globe/render/AssetManager.h
+    src/globe/render/AssetManager.cpp
     src/globe/render/shaders.qrc
 )
 
