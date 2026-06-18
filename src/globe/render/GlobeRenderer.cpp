@@ -67,12 +67,16 @@ void GlobeRenderer::loadTextures() {
 }
 
 QMatrix4x4 GlobeRenderer::baseRotation() const {
-    // Sun-centric: rotate so the sub-solar longitude ends at screen center (+Z).
+    // Sun-centric: map the sub-solar point (lat, lon) onto +Z so the sunlit
+    // hemisphere faces the camera. Rz(-lon) brings the sub-solar longitude to
+    // the +X axis, leaving the point at (cosLat, 0, sinLat); Ry(lat-90) then
+    // maps that point exactly onto +Z (verified: x'->0, z'->1).
     QMatrix4x4 m;
     if (m_sun) {
         const float lon = float(m_sun->subSolarLongitude());
-        m.rotate(-lon, 0.0f, 0.0f, 1.0f);  // bring sub-solar lon to +X
-        m.rotate(90.0f, 0.0f, 1.0f, 0.0f); // +X -> +Z (toward camera)
+        const float lat = float(m_sun->subSolarLatitude());
+        m.rotate(-lon, 0.0f, 0.0f, 1.0f);
+        m.rotate(lat - 90.0f, 0.0f, 1.0f, 0.0f);
     }
     return m;
 }
