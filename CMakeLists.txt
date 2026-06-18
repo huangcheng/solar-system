@@ -8,17 +8,30 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets L
 
 qt_standard_project_setup()
 
+# Core library: holds all globe sources (AUTOMOC-enabled) so both the app and
+# the tests can link the same code. (An executable target cannot be linked into
+# another target, which is why this is a STATIC library.)
+qt_add_library(globe_lib STATIC
+    src/globe/GlobeWindow.h
+    src/globe/GlobeWindow.cpp
+    src/globe/ConfigManager.h
+    src/globe/ConfigManager.cpp
+)
+
+target_include_directories(globe_lib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/globe
+)
+
+target_link_libraries(globe_lib PUBLIC
+    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
+)
+
 qt_add_executable(globe
     WIN32 MACOSX_BUNDLE
     main.cpp
-    src/globe/GlobeWindow.h
-    src/globe/GlobeWindow.cpp
 )
-
-target_include_directories(globe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(globe PRIVATE
-    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
-)
+target_link_libraries(globe PRIVATE globe_lib)
 
 qt_add_translations(TARGETS globe TS_FILES globe_zh_CN.ts)
 
