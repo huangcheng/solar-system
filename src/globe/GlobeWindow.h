@@ -9,6 +9,8 @@ public:
     GlobeView *view() { return m_view; }
 protected:
     void paintEvent(QPaintEvent *) override {}
+    void showEvent(QShowEvent *) override;
+    void resizeEvent(QResizeEvent *) override;
 private:
     GlobeView *m_view;
 };

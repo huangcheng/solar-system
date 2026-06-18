@@ -14,6 +14,8 @@ qt_standard_project_setup()
 qt_add_library(globe_lib STATIC
     src/globe/GlobeWindow.h
     src/globe/GlobeWindow.cpp
+    src/globe/PlatformWindow.h
+    src/globe/PlatformWindow.cpp
     src/globe/ConfigManager.h
     src/globe/ConfigManager.cpp
     src/globe/render/SunModel.h
@@ -26,6 +28,8 @@ qt_add_library(globe_lib STATIC
     src/globe/render/GlobeRenderer.cpp
     src/globe/render/GlobeView.h
     src/globe/render/GlobeView.cpp
+    src/globe/render/TimeController.h
+    src/globe/render/TimeController.cpp
     src/globe/render/shaders.qrc
 )
 
@@ -38,6 +42,10 @@ target_include_directories(globe_lib PUBLIC
 target_link_libraries(globe_lib PUBLIC
     Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
 )
+
+if(WIN32)
+    target_link_libraries(globe_lib PUBLIC dwmapi)
+endif()
 
 qt_add_executable(globe
     WIN32 MACOSX_BUNDLE
