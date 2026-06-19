@@ -24,7 +24,7 @@ public:
 
 private:
     QString m_path;
-    int m_x = 100, m_y = 100, m_diameter = 360, m_fpsCap = 60;
+    int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;

@@ -22,7 +22,7 @@ GlobeWindow::GlobeWindow(QWidget *parent)
     auto *lay = new QVBoxLayout(this);
     lay->setContentsMargins(0, 0, 0, 0);
     lay->addWidget(m_view);
-    resize(360, 360);
+    resize(220, 220);
 }
 
 void GlobeWindow::showEvent(QShowEvent *e) {
@@ -67,7 +67,7 @@ void GlobeWindow::mouseMoveEvent(QMouseEvent *e) {
 void GlobeWindow::wheelEvent(QWheelEvent *e) {
     if (m_cam) {
         m_cam->applyZoom(e->angleDelta().y());
-        const int side = int(360 * m_cam->zoom());
+        const int side = int(220 * m_cam->zoom());
         resize(side, side);
         m_view->update();
     }
@@ -77,7 +77,7 @@ void GlobeWindow::wheelEvent(QWheelEvent *e) {
 void GlobeWindow::mouseDoubleClickEvent(QMouseEvent *e) {
     if (m_cam) {
         m_cam->reset();
-        resize(360, 360);
+        resize(220, 220);
         m_view->update();
     }
     QWidget::mouseDoubleClickEvent(e);

@@ -185,20 +185,22 @@ void GlobeRenderer::render() {
     QMatrix4x4 proj;
     proj.perspective(35.0f, 1.0f, 0.1f, 10.0f);
     QMatrix4x4 view;
-    view.translate(0.0f, 0.0f, -3.0f);
+    view.translate(0.0f, 0.0f, -3.25f);   // globe fills the whole disc — no black rim
 
     const QMatrix4x4 base = baseRotation();
     const QMatrix4x4 offset = m_cam ? m_cam->offsetRotation() : QMatrix4x4();
     const float zoom = m_cam ? m_cam->zoom() : 1.0f;
-    QMatrix4x4 model = offset * base;
-    model.scale(zoom);
+    // Tilt the sun ~50deg off the camera axis: the terminator becomes a visible
+    // crescent and the globe turns in real time (continents drift through
+    // day/night) instead of the sun being pinned dead-center (which looked locked).
+    QMatrix4x4 tilt; tilt.rotate(50.0f, 0.0f, 1.0f, 0.0f);
+    const QMatrix4x4 oriented = offset * tilt * base;
+    QMatrix4x4 model = oriented;
+    model.scale(zoom);   // globe fills the widget disc edge-to-edge (no black background)
 
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
-    // Sun direction in WORLD space. uSunDir is the object/ECEF sub-solar
-    // direction; rotating it by the model's orientation (offset*base, no scale)
-    // gives the same lit hemisphere expressed in the frame of vWorld, so the
-    // surface shader can do normal-map relief and specular consistently.
-    const QVector3D sunWorld = (offset * base).mapVector(sun).normalized();
+    // Sun direction in WORLD space, consistent with vWorld (offset*tilt*base, no scale).
+    const QVector3D sunWorld = oriented.mapVector(sun).normalized();
 
     // Earth
     m_gl->glEnable(GL_DEPTH_TEST);
@@ -206,7 +208,7 @@ void GlobeRenderer::render() {
     m_earthProg->setUniformValue("uMVP", proj * view * model);
     m_earthProg->setUniformValue("uModel", model);
     m_earthProg->setUniformValue("uSunWorld", sunWorld);
-    m_earthProg->setUniformValue("uViewPos", QVector3D(0, 0, 3));
+    m_earthProg->setUniformValue("uViewPos", QVector3D(0, 0, 3.25));
     m_earthProg->setUniformValue("uHasDay", m_texDay ? 1.0f : 0.0f);
     m_earthProg->setUniformValue("uHasNight", m_texNight ? 1.0f : 0.0f);
     m_earthProg->setUniformValue("uHasNormal", m_texNormal ? 1.0f : 0.0f);
@@ -238,13 +240,13 @@ void GlobeRenderer::render() {
     // earth pass) with depth writes off so the Earth occludes the inner shell
     // and only the silhouette limb glow is rasterized.
     m_gl->glDepthMask(GL_FALSE);
-    QMatrix4x4 amodel = offset * baseRotation();
-    amodel.scale(zoom * 1.015f);
+    QMatrix4x4 amodel = oriented;
+    amodel.scale(zoom * 1.02f);
     m_atmoProg->bind();
     m_atmoProg->setUniformValue("uMVP", proj * view * amodel);
     m_atmoProg->setUniformValue("uModel", amodel);
-    m_atmoProg->setUniformValue("uSunDir", sun);
-    m_atmoProg->setUniformValue("uViewPos", QVector3D(0, 0, 3));
+    m_atmoProg->setUniformValue("uSunDir", sunWorld);
+    m_atmoProg->setUniformValue("uViewPos", QVector3D(0, 0, 3.25));
     m_gl->glCullFace(GL_FRONT);
     m_gl->glEnable(GL_CULL_FACE);
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
