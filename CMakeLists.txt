@@ -18,6 +18,18 @@ qt_add_library(celestial STATIC
     src/celestial/CameraController.cpp
     src/celestial/SunModel.h
     src/celestial/SunModel.cpp
+    src/celestial/ConfigManager.h
+    src/celestial/ConfigManager.cpp
+    src/celestial/SettingsDialog.h
+    src/celestial/SettingsDialog.cpp
+    src/celestial/SystemTray.h
+    src/celestial/SystemTray.cpp
+    src/celestial/FullscreenWatcher.h
+    src/celestial/FullscreenWatcher.cpp
+    src/celestial/PlatformWindow.h
+    src/celestial/PlatformWindow.cpp
+    src/celestial/LocationProvider.h
+    src/celestial/LocationProvider.cpp
 )
 
 target_include_directories(celestial PUBLIC
@@ -26,8 +38,12 @@ target_include_directories(celestial PUBLIC
 )
 
 target_link_libraries(celestial PUBLIC
-    Qt::Core Qt::Gui
+    Qt::Core Qt::Gui Qt::Widgets Qt::Positioning
 )
+
+if(WIN32)
+    target_link_libraries(celestial PUBLIC dwmapi user32)
+endif()
 
 # Core library: holds all globe sources (AUTOMOC-enabled) so both the app and
 # the tests can link the same code. (An executable target cannot be linked into
@@ -35,18 +51,6 @@ target_link_libraries(celestial PUBLIC
 qt_add_library(globe_lib STATIC
     src/globe/GlobeWindow.h
     src/globe/GlobeWindow.cpp
-    src/globe/SystemTray.h
-    src/globe/SystemTray.cpp
-    src/globe/PlatformWindow.h
-    src/globe/PlatformWindow.cpp
-    src/globe/ConfigManager.h
-    src/globe/ConfigManager.cpp
-    src/globe/LocationProvider.h
-    src/globe/LocationProvider.cpp
-    src/globe/SettingsDialog.h
-    src/globe/SettingsDialog.cpp
-    src/globe/FullscreenWatcher.h
-    src/globe/FullscreenWatcher.cpp
     src/globe/render/GlobeRenderer.h
     src/globe/render/GlobeRenderer.cpp
     src/globe/render/GlobeView.h
@@ -64,12 +68,8 @@ target_include_directories(globe_lib PUBLIC
 
 target_link_libraries(globe_lib PUBLIC
     celestial
-    Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
+    Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
 )
-
-if(WIN32)
-    target_link_libraries(globe_lib PUBLIC dwmapi user32)
-endif()
 
 qt_add_executable(globe
     WIN32 MACOSX_BUNDLE
