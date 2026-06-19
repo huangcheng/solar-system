@@ -8,6 +8,8 @@
 #include <QApplication>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QDebug>
+#include <QDateTime>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);

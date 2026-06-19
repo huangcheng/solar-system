@@ -6,6 +6,8 @@
 #include <QCoreApplication>
 #include <QIODevice>
 #include <QVector>
+#include <QVector3D>
+#include <QVector4D>
 #include <cmath>
 
 namespace {
@@ -96,23 +98,44 @@ void GlobeRenderer::loadTextures() {
     };
     m_texDay     = make(m_assets->image(AssetManager::Day,      cap));
     m_texNight   = make(m_assets->image(AssetManager::Night,    cap));
-    // Cloud layer disabled on request.
+    // Cloud layer disabled: at full opacity it hid the terrain. The earth should
+    // read as bare land/mountains/sea. (clouds.* shaders are kept and the draw
+    // pass self-skips when m_texClouds is null, so it's a one-line re-enable.)
     // m_texClouds  = make(m_assets->image(AssetManager::Clouds,   cap));
-    // Normal & specular maps disabled: they introduced an equator seam and a
-    // glassy look. The photoreal day/night/clouds look better matte. Revisit later.
-    // m_texNormal  = make(m_assets->image(AssetManager::Normal,   cap));
-    // m_texSpecular= make(m_assets->image(AssetManager::Specular, cap));
+    // Normal (terrain relief) + specular (ocean water mask) re-enabled. The old
+    // seam came from a screen-space derivative tangent basis; earth.frag now
+    // builds the tangent frame analytically from the sphere, and the glint is
+    // water-masked + subtle (no glassy sheen).
+    m_texNormal  = make(m_assets->image(AssetManager::Normal,   cap));
+    m_texSpecular= make(m_assets->image(AssetManager::Specular, cap));
 }
 
 QMatrix4x4 GlobeRenderer::sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg) {
-    // QMatrix4x4::rotate() post-multiplies, so the calls below compose
-    // M = Ry(lat-90) * Rz(-lon), i.e. Rz is applied to the vertex first.
-    // Rz(-lon) brings the sub-solar longitude to the +X axis, leaving the
-    // sub-solar point at (cosLat, 0, sinLat); Ry(lat-90) then maps it onto +Z.
-    // Verified: maps sunDirection(lat,lon) -> (0,0,1) for all (lat,lon).
+    // Look-at orientation: point the camera at the sub-solar point while keeping
+    // the Earth's spin axis UP on screen, so the globe never appears rolled/tilted
+    // sideways. The earlier Ry(lat-90)*Rz(-lon) form centred the lit hemisphere
+    // but left the "up" vector uncontrolled, which rolled the globe by the
+    // sub-solar latitude (~23 deg at solstice).
+    //
+    // Build an orthonormal object-space frame at the sub-solar point and use it
+    // as the matrix rows, mapping: east->+X, north-along-meridian->+Y, sun->+Z.
+    // north pole then projects straight up (only tilted toward/away by season),
+    // and sunDirection(lat,lon) still maps exactly to +Z (see test_sunview).
+    const double latR = subSolarLatDeg * kPi / 180.0;
+    const double lonR = subSolarLonDeg * kPi / 180.0;
+    const QVector3D s(float(std::cos(latR) * std::cos(lonR)),
+                      float(std::cos(latR) * std::sin(lonR)),
+                      float(std::sin(latR)));
+    const QVector3D polar(0.0f, 0.0f, 1.0f);             // object north pole
+    QVector3D right = QVector3D::crossProduct(polar, s); // east at sub-solar point
+    right.normalize();                                   // (|lat|<90 always, never degenerate)
+    const QVector3D up = QVector3D::crossProduct(s, right); // north along the meridian (unit)
+
     QMatrix4x4 m;
-    m.rotate(float(subSolarLatDeg) - 90.0f, 0.0f, 1.0f, 0.0f);
-    m.rotate(-float(subSolarLonDeg),        0.0f, 0.0f, 1.0f);
+    m.setRow(0, QVector4D(right, 0.0f));
+    m.setRow(1, QVector4D(up,    0.0f));
+    m.setRow(2, QVector4D(s,     0.0f));
+    m.setRow(3, QVector4D(0.0f, 0.0f, 0.0f, 1.0f));
     return m;
 }
 
@@ -171,13 +194,18 @@ void GlobeRenderer::render() {
     model.scale(zoom);
 
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
+    // Sun direction in WORLD space. uSunDir is the object/ECEF sub-solar
+    // direction; rotating it by the model's orientation (offset*base, no scale)
+    // gives the same lit hemisphere expressed in the frame of vWorld, so the
+    // surface shader can do normal-map relief and specular consistently.
+    const QVector3D sunWorld = (offset * base).mapVector(sun).normalized();
 
     // Earth
     m_gl->glEnable(GL_DEPTH_TEST);
     m_earthProg->bind();
     m_earthProg->setUniformValue("uMVP", proj * view * model);
     m_earthProg->setUniformValue("uModel", model);
-    m_earthProg->setUniformValue("uSunDir", sun);
+    m_earthProg->setUniformValue("uSunWorld", sunWorld);
     m_earthProg->setUniformValue("uViewPos", QVector3D(0, 0, 3));
     m_earthProg->setUniformValue("uHasDay", m_texDay ? 1.0f : 0.0f);
     m_earthProg->setUniformValue("uHasNight", m_texNight ? 1.0f : 0.0f);
@@ -199,7 +227,7 @@ void GlobeRenderer::render() {
         m_cloudProg->bind();
         m_cloudProg->setUniformValue("uMVP", proj * view * cmodel);
         m_cloudProg->setUniformValue("uModel", cmodel);
-        m_cloudProg->setUniformValue("uSunDir", sun);
+        m_cloudProg->setUniformValue("uSunWorld", sunWorld);
         m_cloudProg->setUniformValue("uHasClouds", 1.0f);
         m_texClouds->bind(2);
         m_cloudProg->setUniformValue("uClouds", 2);
