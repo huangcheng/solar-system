@@ -197,11 +197,10 @@ void GlobeRenderer::render() {
     const QMatrix4x4 base = baseRotation();
     const QMatrix4x4 offset = m_cam ? m_cam->offsetRotation() : QMatrix4x4();
     const float zoom = m_cam ? m_cam->zoom() : 1.0f;
-    // Tilt the sun 90° off the camera axis so the terminator is a straight great
-    // circle across the visible disc — a physically realistic side-lit view where
-    // roughly half the globe is day and half is night. The continents still drift
-    // in real time as Earth spins under the fixed sun direction.
-    QMatrix4x4 tilt; tilt.rotate(90.0f, 0.0f, 1.0f, 0.0f);
+    // Tilt the sun ~50deg off the camera axis: the terminator becomes a visible
+    // crescent and the globe turns in real time (continents drift through
+    // day/night) instead of the sun being pinned dead-center (which looked locked).
+    QMatrix4x4 tilt; tilt.rotate(50.0f, 0.0f, 1.0f, 0.0f);
     const QMatrix4x4 oriented = offset * tilt * base;
     // Continuous spin about the polar axis so the globe visibly turns, scaled
     // by a real-time ratio (m_rotRatio: 1 = true 24h, 2880 = ~1 turn/30s). The
