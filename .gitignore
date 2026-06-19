@@ -85,3 +85,7 @@ CMakeLists.txt.user*
 
 # Brainstorming visual-companion artifacts
 /.superpowers/
+
+# oh-my-opencode-slim worktrees
+.slim/worktrees/
+.slim/worktrees.json
