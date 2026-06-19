@@ -24,6 +24,8 @@ qt_add_library(globe_lib STATIC
     src/globe/LocationProvider.cpp
     src/globe/SettingsDialog.h
     src/globe/SettingsDialog.cpp
+    src/globe/FullscreenWatcher.h
+    src/globe/FullscreenWatcher.cpp
     src/globe/render/SunModel.h
     src/globe/render/SunModel.cpp
     src/globe/render/CameraController.h
@@ -49,7 +51,7 @@ target_link_libraries(globe_lib PUBLIC
 )
 
 if(WIN32)
-    target_link_libraries(globe_lib PUBLIC dwmapi)
+    target_link_libraries(globe_lib PUBLIC dwmapi user32)
 endif()
 
 qt_add_executable(globe

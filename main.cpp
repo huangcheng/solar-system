@@ -2,6 +2,7 @@
 #include "globe/ConfigManager.h"
 #include "globe/SystemTray.h"
 #include "globe/SettingsDialog.h"
+#include "globe/FullscreenWatcher.h"
 #include "render/SunModel.h"
 #include "render/CameraController.h"
 #include "render/AssetManager.h"
@@ -106,6 +107,15 @@ int main(int argc, char *argv[]) {
     QTimer tooltipTimer;
     QObject::connect(&tooltipTimer, &QTimer::timeout, &w, refreshTooltip);
     tooltipTimer.start(300000); // every 5 min
+
+    // Hide the globe when a fullscreen app (game, video player, etc.) is in the
+    // foreground, so it doesn't float on top of fullscreen content.
+    FullscreenWatcher fullscreenWatcher;
+    QObject::connect(&fullscreenWatcher, &FullscreenWatcher::fullscreenAppStarted, &w,
+        [&w] { w.hide(); });
+    QObject::connect(&fullscreenWatcher, &FullscreenWatcher::fullscreenAppStopped, &w,
+        [&w] { w.show(); });
+    fullscreenWatcher.start();
 
     w.show();
     return app.exec();
