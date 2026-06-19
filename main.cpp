@@ -14,8 +14,31 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QTranslator>
+#include <QSharedMemory>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 int main(int argc, char *argv[]) {
+    // --- Singleton: only one instance allowed at a time ---
+#ifdef Q_OS_WIN
+    {
+        HANDLE mutex = CreateMutexW(nullptr, TRUE, L"GlobeAppSingleton_v1");
+        if (GetLastError() == ERROR_ALREADY_EXISTS) {
+            if (mutex) CloseHandle(mutex);
+            return 0; // another instance is already running
+        }
+    }
+#else
+    {
+        QSharedMemory shm(QStringLiteral("globe-singleton-v1"));
+        if (!shm.create(1)) {
+            return 0; // another instance is already running
+        }
+    }
+#endif
+
     QApplication app(argc, argv);
     app.setApplicationName("Globe");
 
