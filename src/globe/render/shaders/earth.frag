@@ -92,7 +92,9 @@ void main() {
     day *= relief;
 
     // Faint earthshine/airglow so the night side isn't pure black.
-    vec3 darkSide = night * 0.8 + day * 0.05 + vec3(0.012, 0.018, 0.035);
+    vec3 darkSide = (uUseNightTexture > 0.5)
+                        ? (night * 0.8 + day * 0.05 + vec3(0.012, 0.018, 0.035))
+                        : vec3(0.015, 0.020, 0.035);
     vec3 color = mix(darkSide, day, dayFactor);
 
     // Warm dusk that hugs the terminator, faded at the grazing limb and over dark
