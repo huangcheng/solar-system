@@ -25,6 +25,11 @@
     </message>
     <message>
         <location filename="src/globe/SettingsDialog.cpp"/>
+        <source>Always on Top</source>
+        <translation>始终置顶</translation>
+    </message>
+    <message>
+        <location filename="src/globe/SettingsDialog.cpp"/>
         <source>Night Mode</source>
         <translation>夜间模式</translation>
     </message>

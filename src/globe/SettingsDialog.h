@@ -20,6 +20,7 @@ private slots:
 private:
     ConfigManager *m_config = nullptr;
     QCheckBox *m_gridCheck = nullptr;
+    QCheckBox *m_alwaysOnTopCheck = nullptr;
     QRadioButton *m_simpleNightRadio = nullptr;
     QRadioButton *m_textureNightRadio = nullptr;
     QComboBox *m_languageCombo = nullptr;

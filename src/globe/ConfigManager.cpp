@@ -39,6 +39,8 @@ QString ConfigManager::nightMode() const { return m_nightMode; }
 void ConfigManager::setNightMode(const QString &v) { m_nightMode = (v == QStringLiteral("texture") ? v : QStringLiteral("simple")); }
 QString ConfigManager::language() const { return m_language; }
 void ConfigManager::setLanguage(const QString &v) { m_language = (v == QStringLiteral("zh_CN") ? v : QStringLiteral("en")); }
+bool ConfigManager::alwaysOnTop() const { return m_alwaysOnTop; }
+void ConfigManager::setAlwaysOnTop(bool v) { m_alwaysOnTop = v; }
 
 void ConfigManager::load() {
     QFile f(m_path);
@@ -59,6 +61,7 @@ void ConfigManager::load() {
                       ? QStringLiteral("texture") : QStringLiteral("simple");
     m_language  = obj.value("language").toString(m_language) == QStringLiteral("zh_CN")
                       ? QStringLiteral("zh_CN") : QStringLiteral("en");
+    m_alwaysOnTop = obj.value("alwaysOnTop").toBool(m_alwaysOnTop);
 }
 
 void ConfigManager::save() {
@@ -72,6 +75,7 @@ void ConfigManager::save() {
     o["showGrid"] = m_showGrid;
     o["nightMode"] = m_nightMode;
     o["language"]  = m_language;
+    o["alwaysOnTop"] = m_alwaysOnTop;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))
         f.write(QJsonDocument(o).toJson(QJsonDocument::Indented));

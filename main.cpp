@@ -56,6 +56,7 @@ int main(int argc, char *argv[]) {
     w.view()->renderer().setHomeLocation(config.homeLatitude(), config.homeLongitude(), true);
     w.view()->renderer().setShowGrid(config.showGrid());
     w.view()->renderer().setUseNightTexture(config.nightMode() == QStringLiteral("texture"));
+    w.setWindowFlag(Qt::WindowStaysOnTopHint, config.alwaysOnTop());
     QObject::connect(&location, &LocationProvider::locationChanged, &w,
         [&w](double lat, double lon) { w.view()->renderer().setHomeLocation(lat, lon, true); });
 
@@ -74,6 +75,10 @@ int main(int argc, char *argv[]) {
             const bool useTexture = config.nightMode() == QStringLiteral("texture");
             w.view()->renderer().setShowGrid(config.showGrid());
             w.view()->renderer().setUseNightTexture(useTexture);
+            // Re-apply always-on-top flag (requires hide/show to take effect).
+            const bool wasVisible = w.isVisible();
+            w.setWindowFlag(Qt::WindowStaysOnTopHint, config.alwaysOnTop());
+            if (wasVisible) w.show();
             app.removeTranslator(&translator);
             if (config.language() == QStringLiteral("zh_CN")) {
                 if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))

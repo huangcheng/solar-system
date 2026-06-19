@@ -32,6 +32,10 @@ void SettingsDialog::setupUi() {
     m_gridCheck->setChecked(m_config->showGrid());
     form->addRow(m_gridCheck);
 
+    m_alwaysOnTopCheck = new QCheckBox(tr("Always on Top"));
+    m_alwaysOnTopCheck->setChecked(m_config->alwaysOnTop());
+    form->addRow(m_alwaysOnTopCheck);
+
     auto *nightGroup = new QGroupBox(tr("Night Mode"));
     auto *nightLayout = new QVBoxLayout(nightGroup);
     m_simpleNightRadio = new QRadioButton(tr("Simple Night"));
@@ -57,6 +61,7 @@ void SettingsDialog::accept() {
 
     m_config->setLanguage(m_languageCombo->currentData().toString());
     m_config->setShowGrid(m_gridCheck->isChecked());
+    m_config->setAlwaysOnTop(m_alwaysOnTopCheck->isChecked());
     m_config->setNightMode(m_textureNightRadio->isChecked()
                                ? QStringLiteral("texture") : QStringLiteral("simple"));
     m_config->save();
