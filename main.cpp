@@ -52,8 +52,16 @@ int main(int argc, char *argv[]) {
     w.setConfig(&config);
 
     SystemTray tray;
+    tray.setShowGridChecked(config.showGrid());
     QObject::connect(&tray, &SystemTray::toggleVisibility, &w,
         [&w] { w.isVisible() ? w.hide() : w.show(); });
+    QObject::connect(&tray, &SystemTray::toggleShowGrid, &w,
+        [&w, &config](bool on) {
+            config.setShowGrid(on);
+            config.save();
+            w.view()->renderer().setShowGrid(on);
+            w.view()->update();
+        });
     QObject::connect(&tray, &SystemTray::resetView, &w, [&w, &camera] {
         camera.reset();
         w.view()->renderer().clearCenterLongitude();
