@@ -30,8 +30,8 @@ uniform float uTime;        // seconds (small range), for the pulse
 uniform float uShowGrid;    // 1 when the lat/lon grid overlay is enabled
 uniform float uUseNightTexture; // 1 = use night texture, 0 = simple dim day map
 
-const float kReliefStrength = 2.2;   // how strongly the normal map tilts the normal
-const float kReliefShade    = 1.7;   // how much a slope darkens/brightens the day map
+const float kReliefStrength = 3.8;   // how strongly the normal map tilts the normal
+const float kReliefShade    = 2.6;   // how much a slope darkens/brightens the day map
 const float kGlint          = 0.30;  // ocean sun-glint intensity (low = not glassy)
 
 const float kGridStepRad = 3.14159265 / 12.0;     // 15 degrees
@@ -88,7 +88,7 @@ void main() {
     // Relief shading: how much the bumped slope faces the sun vs the flat sphere.
     // Centered on 1.0 so flat ground is unchanged; the effect is strongest near
     // the terminator (grazing light), exactly where real relief stands out.
-    float relief = clamp((dot(N, sun) - cosGeo) * kReliefShade + 1.0, 0.55, 1.45);
+    float relief = clamp((dot(N, sun) - cosGeo) * kReliefShade + 1.0, 0.40, 1.60);
     day *= relief;
 
     // Faint earthshine/airglow so the night side isn't pure black. The dim day
