@@ -220,7 +220,12 @@ void GlobeRenderer::render() {
     model.scale(zoom);   // globe fills the widget disc edge-to-edge (no black background)
 
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
-    const QVector3D sunWorld = oriented.mapVector(sun).normalized();
+    // Derive sunWorld from the FULL model (including spin) so the day/night
+    // terminator is "painted" onto the globe surface: it stays glued to the
+    // same longitudes and rotates WITH the Earth like a toy globe you spin.
+    // (dot(model*aPos, model*sun) == dot(aPos, sun) — spin cancels out, so
+    // each continent keeps its real-world day/night status as it spins.)
+    const QVector3D sunWorld = model.mapVector(sun).normalized();
 
     // Earth
     m_gl->glEnable(GL_DEPTH_TEST);
