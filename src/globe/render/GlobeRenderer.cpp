@@ -195,11 +195,16 @@ void GlobeRenderer::render() {
     // day/night) instead of the sun being pinned dead-center (which looked locked).
     QMatrix4x4 tilt; tilt.rotate(50.0f, 0.0f, 1.0f, 0.0f);
     const QMatrix4x4 oriented = offset * tilt * base;
-    QMatrix4x4 model = oriented;
+    // Continuous spin about the polar axis so the globe visibly turns. The
+    // day/night terminator stays real-time: sunWorld is derived from `oriented`
+    // WITHOUT the spin, so the sun stays fixed while Earth rotates under it.
+    // (1 turn / 90 s — clearly visible; tune via the constant below.)
+    const float spinDeg = std::fmod(float(QDateTime::currentMSecsSinceEpoch()) * (360.0f / 90000.0f), 360.0f);
+    QMatrix4x4 spin; spin.rotate(spinDeg, 0.0f, 0.0f, 1.0f);
+    QMatrix4x4 model = oriented * spin;
     model.scale(zoom);   // globe fills the widget disc edge-to-edge (no black background)
 
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
-    // Sun direction in WORLD space, consistent with vWorld (offset*tilt*base, no scale).
     const QVector3D sunWorld = oriented.mapVector(sun).normalized();
 
     // Earth
