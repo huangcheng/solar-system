@@ -8,6 +8,31 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets P
 
 qt_standard_project_setup()
 
+# Generic, app-agnostic celestial mechanics / camera / asset loading shared by
+# every body widget (earth, sun, mars, ...). Kept as a separate STATIC library
+# so each app links only what it needs while reusing the same code.
+qt_add_library(celestial STATIC
+    src/celestial/AssetManager.h
+    src/celestial/AssetManager.cpp
+    src/celestial/CameraController.h
+    src/celestial/CameraController.cpp
+    src/celestial/SunModel.h
+    src/celestial/SunModel.cpp
+)
+
+target_include_directories(celestial PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/celestial
+)
+
+target_link_libraries(celestial PUBLIC
+    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
+)
+
+if(WIN32)
+    target_link_libraries(celestial PUBLIC dwmapi user32)
+endif()
+
 # Core library: holds all globe sources (AUTOMOC-enabled) so both the app and
 # the tests can link the same code. (An executable target cannot be linked into
 # another target, which is why this is a STATIC library.)
@@ -26,12 +51,6 @@ qt_add_library(globe_lib STATIC
     src/globe/SettingsDialog.cpp
     src/globe/FullscreenWatcher.h
     src/globe/FullscreenWatcher.cpp
-    src/globe/render/SunModel.h
-    src/globe/render/SunModel.cpp
-    src/globe/render/CameraController.h
-    src/globe/render/CameraController.cpp
-    src/globe/render/AssetManager.h
-    src/globe/render/AssetManager.cpp
     src/globe/render/GlobeRenderer.h
     src/globe/render/GlobeRenderer.cpp
     src/globe/render/GlobeView.h
@@ -44,15 +63,10 @@ target_include_directories(globe_lib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/globe
     ${CMAKE_CURRENT_SOURCE_DIR}/src/globe/render
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/celestial
 )
 
-target_link_libraries(globe_lib PUBLIC
-    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
-)
-
-if(WIN32)
-    target_link_libraries(globe_lib PUBLIC dwmapi user32)
-endif()
+target_link_libraries(globe_lib PUBLIC celestial)
 
 qt_add_executable(globe
     WIN32 MACOSX_BUNDLE

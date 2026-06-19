@@ -1,7 +1,7 @@
 #include "GlobeWindow.h"
 #include "PlatformWindow.h"
 #include "ConfigManager.h"
-#include "render/CameraController.h"
+#include "celestial/CameraController.h"
 #include <QVBoxLayout>
 #include <QRegion>
 #include <QShowEvent>
