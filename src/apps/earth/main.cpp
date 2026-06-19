@@ -10,9 +10,8 @@
 #include "LocationProvider.h"
 #include "BodyConfig.h"
 #include <QApplication>
-#include <QStandardPaths>
+#include <QCoreApplication>
 #include <QTimer>
-#include <QDebug>
 #include <QDateTime>
 #include <QTranslator>
 #include <QSharedMemory>
@@ -38,25 +37,20 @@ int main(int argc, char *argv[]) {
 #endif
 
     QApplication app(argc, argv);
-    // Phase 1 deliberately keeps the legacy "Globe" application name so that
+    // Phase 1 keeps the legacy "Globe" application name so that
     // QStandardPaths::AppConfigLocation resolves to the same directory the old
     // globe.exe used, preserving the user's existing config.json. Per-body
     // config directories will be introduced in Phase 2.
     app.setApplicationName("Globe");
 
+    ConfigManager config;
+
     QTranslator translator;
-    {
-        ConfigManager tmpConfig;  // uses default Globe config path to preserve existing settings
-        const QString lang = tmpConfig.language();
-        if (lang == QStringLiteral("zh_CN")) {
-            if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))
-                app.installTranslator(&translator);
-        }
+    if (config.language() == QStringLiteral("zh_CN")) {
+        if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))
+            app.installTranslator(&translator);
     }
 
-    // Phase 1 keeps the legacy config path so the user's existing settings are
-    // preserved. Per-body config directories will be introduced in Phase 2.
-    ConfigManager config;
     AssetManager assets;
     SunModel sun;
     CameraController camera;
@@ -97,9 +91,10 @@ int main(int argc, char *argv[]) {
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });
     QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &widget,
         [&widget, &config, &translator, &app]() {
-            widget.applyOptionsFromConfig();
+            // applyOptionsFromConfig() toggles Qt::WindowStaysOnTopHint; changing
+            // window flags hides a visible widget, so capture and re-show it.
             const bool wasVisible = widget.isVisible();
-            widget.setWindowFlag(Qt::WindowStaysOnTopHint, config.alwaysOnTop());
+            widget.applyOptionsFromConfig();
             if (wasVisible) widget.show();
             app.removeTranslator(&translator);
             if (config.language() == QStringLiteral("zh_CN")) {
@@ -130,7 +125,7 @@ int main(int argc, char *argv[]) {
 
     auto refreshTooltip = [&sun, &tray] {
         sun.setUtc(QDateTime::currentDateTimeUtc());
-        tray.setSolarTooltip(CelestialWidget::tr("Sun sub-point: %1°, %2°")
+        tray.setSolarTooltip(QCoreApplication::translate("GlobeWindow", "Sun sub-point: %1°, %2°")
             .arg(sun.subSolarLatitude(), 0, 'f', 1)
             .arg(sun.subSolarLongitude(), 0, 'f', 1));
     };
