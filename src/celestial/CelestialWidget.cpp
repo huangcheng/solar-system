@@ -2,13 +2,12 @@
 #include "PlatformWindow.h"
 #include "CameraController.h"
 #include "ConfigManager.h"
-#include <QVBoxLayout>
 #include <QRegion>
 #include <QShowEvent>
 #include <QResizeEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
-#include <QOpenGLContext>
+#include <QOpenGLFunctions_3_3_Core>
 #include <QSurfaceFormat>
 
 CelestialWidget::CelestialWidget(const BodyConfig& config,

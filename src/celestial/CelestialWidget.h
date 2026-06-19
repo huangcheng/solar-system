@@ -37,9 +37,12 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *) override;
 
 private:
+    // m_gl must outlive m_body: CelestialBody's destructor tears down GL
+    // resources through the raw pointer it holds. Members destruct in reverse
+    // declaration order, so m_gl is declared first (destroyed last).
+    std::unique_ptr<QOpenGLFunctions_3_3_Core> m_gl;
     CelestialBody m_body;
     ConfigManager *m_config = nullptr;
     CameraController *m_cam = nullptr;
     QPoint m_lastPos;
-    std::unique_ptr<QOpenGLFunctions_3_3_Core> m_gl;
 };
