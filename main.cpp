@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
             const bool useTexture = config.nightMode() == QStringLiteral("texture");
             w.view()->renderer().setShowGrid(config.showGrid());
             w.view()->renderer().setUseNightTexture(useTexture);
+            w.view()->renderer().setRotationSpeedRatio(config.rotationSpeed());
             // Re-apply always-on-top flag (requires hide/show to take effect).
             const bool wasVisible = w.isVisible();
             w.setWindowFlag(Qt::WindowStaysOnTopHint, config.alwaysOnTop());

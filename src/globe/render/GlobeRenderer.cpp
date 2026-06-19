@@ -217,7 +217,7 @@ void GlobeRenderer::render() {
         QMatrix4x4 spin; spin.rotate(float(spinDeg), 0.0f, 0.0f, 1.0f);
         model = oriented * spin;
     }
-    model.scale(zoom);   // globe fills the widget disc edge-to-edge (no black background)
+    model.scale(1.0f);   // globe always fills the widget disc — wheel resizes the widget, not the 3D model
 
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
     // Derive sunWorld from the FULL model (including spin) so the day/night
@@ -279,7 +279,7 @@ void GlobeRenderer::render() {
     // and only the silhouette limb glow is rasterized.
     m_gl->glDepthMask(GL_FALSE);
     QMatrix4x4 amodel = oriented;
-    amodel.scale(zoom * 1.02f);
+    amodel.scale(1.02f);
     m_atmoProg->bind();
     m_atmoProg->setUniformValue("uMVP", proj * view * amodel);
     m_atmoProg->setUniformValue("uModel", amodel);

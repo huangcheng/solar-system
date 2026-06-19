@@ -30,6 +30,31 @@
     </message>
     <message>
         <location filename="src/globe/SettingsDialog.cpp"/>
+        <source>Spin Speed:</source>
+        <translation>旋转速度：</translation>
+    </message>
+    <message>
+        <location filename="src/globe/SettingsDialog.cpp"/>
+        <source>Real-time</source>
+        <translation>实时</translation>
+    </message>
+    <message>
+        <location filename="src/globe/SettingsDialog.cpp"/>
+        <source>Slow</source>
+        <translation>慢速</translation>
+    </message>
+    <message>
+        <location filename="src/globe/SettingsDialog.cpp"/>
+        <source>Medium</source>
+        <translation>中速</translation>
+    </message>
+    <message>
+        <location filename="src/globe/SettingsDialog.cpp"/>
+        <source>Fast</source>
+        <translation>快速</translation>
+    </message>
+    <message>
+        <location filename="src/globe/SettingsDialog.cpp"/>
         <source>Night Mode</source>
         <translation>夜间模式</translation>
     </message>

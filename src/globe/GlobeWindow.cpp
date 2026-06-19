@@ -65,19 +65,32 @@ void GlobeWindow::mouseMoveEvent(QMouseEvent *e) {
 }
 
 void GlobeWindow::wheelEvent(QWheelEvent *e) {
-    if (m_cam) {
-        m_cam->applyZoom(e->angleDelta().y());
-        const int side = int(220 * m_cam->zoom());
-        resize(side, side);
-        m_view->update();
+    // Wheel resizes the ENTIRE globe widget (not a 3D magnifier zoom).
+    // The globe always fills the circular widget at any size.
+    const int delta = e->angleDelta().y();
+    const int newSide = qBound(160, int(width() + delta * 0.3), 1024);
+    if (newSide == width()) { QWidget::wheelEvent(e); return; }
+    const QPoint center = geometry().center();
+    resize(newSide, newSide);
+    move(center - QPoint(newSide / 2, newSide / 2));
+    if (m_config) {
+        m_config->setDiameter(newSide);
+        m_config->save();
     }
+    m_view->update();
     QWidget::wheelEvent(e);
 }
 
 void GlobeWindow::mouseDoubleClickEvent(QMouseEvent *e) {
     if (m_cam) {
         m_cam->reset();
+        const QPoint center = geometry().center();
         resize(220, 220);
+        move(center - QPoint(110, 110));
+        if (m_config) {
+            m_config->setDiameter(220);
+            m_config->save();
+        }
         m_view->update();
     }
     QWidget::mouseDoubleClickEvent(e);

@@ -9,6 +9,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QSlider>
 
 SettingsDialog::SettingsDialog(ConfigManager *config, QWidget *parent)
     : QDialog(parent), m_config(config) {
@@ -48,6 +49,20 @@ void SettingsDialog::setupUi() {
         m_simpleNightRadio->setChecked(true);
     form->addRow(nightGroup);
 
+    // Rotation speed slider (1 = real-time, 2880 = fast toy spin).
+    m_rotationSlider = new QSlider(Qt::Horizontal);
+    m_rotationSlider->setRange(1, 2880);
+    m_rotationSlider->setSingleStep(10);
+    m_rotationSlider->setPageStep(100);
+    m_rotationSlider->setValue(m_config->rotationSpeed());
+    m_rotationValueLabel = new QLabel;
+    auto *rotRow = new QHBoxLayout;
+    rotRow->addWidget(m_rotationSlider, 1);
+    rotRow->addWidget(m_rotationValueLabel);
+    form->addRow(tr("Spin Speed:"), rotRow);
+    onRotationSlider(m_rotationSlider->value());
+    connect(m_rotationSlider, &QSlider::valueChanged, this, &SettingsDialog::onRotationSlider);
+
     layout->addLayout(form);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
@@ -56,12 +71,22 @@ void SettingsDialog::setupUi() {
     layout->addWidget(buttons);
 }
 
+void SettingsDialog::onRotationSlider(int value) {
+    QString desc;
+    if (value <= 1) desc = tr("Real-time");
+    else if (value <= 60) desc = tr("Slow");
+    else if (value <= 480) desc = tr("Medium");
+    else desc = tr("Fast");
+    m_rotationValueLabel->setText(QStringLiteral("%1x (%2)").arg(value).arg(desc));
+}
+
 void SettingsDialog::accept() {
     if (!m_config) { QDialog::accept(); return; }
 
     m_config->setLanguage(m_languageCombo->currentData().toString());
     m_config->setShowGrid(m_gridCheck->isChecked());
     m_config->setAlwaysOnTop(m_alwaysOnTopCheck->isChecked());
+    m_config->setRotationSpeed(m_rotationSlider->value());
     m_config->setNightMode(m_textureNightRadio->isChecked()
                                ? QStringLiteral("texture") : QStringLiteral("simple"));
     m_config->save();

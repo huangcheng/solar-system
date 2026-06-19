@@ -5,6 +5,8 @@ class ConfigManager;
 class QCheckBox;
 class QRadioButton;
 class QComboBox;
+class QSlider;
+class QLabel;
 
 class SettingsDialog : public QDialog {
     Q_OBJECT
@@ -16,6 +18,7 @@ signals:
 
 private slots:
     void accept() override;
+    void onRotationSlider(int value);
 
 private:
     ConfigManager *m_config = nullptr;
@@ -24,6 +27,8 @@ private:
     QRadioButton *m_simpleNightRadio = nullptr;
     QRadioButton *m_textureNightRadio = nullptr;
     QComboBox *m_languageCombo = nullptr;
+    QSlider *m_rotationSlider = nullptr;
+    QLabel *m_rotationValueLabel = nullptr;
 
     void setupUi();
 };
