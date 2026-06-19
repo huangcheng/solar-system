@@ -1,5 +1,5 @@
 #include "TimeController.h"
-#include "celestial/SunModel.h"
+#include "SunModel.h"
 #include <QDateTime>
 #include <QMetaObject>
 

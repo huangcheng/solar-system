@@ -32,6 +32,8 @@ qt_add_library(celestial STATIC
     src/celestial/LocationProvider.cpp
     src/celestial/BodyConfig.h
     src/celestial/BodyConfig.cpp
+    src/celestial/TimeController.h
+    src/celestial/TimeController.cpp
     src/celestial/CelestialBody.h
     src/celestial/CelestialBody.cpp
     src/celestial/CelestialWidget.h
@@ -51,9 +53,10 @@ if(WIN32)
     target_link_libraries(celestial PUBLIC dwmapi user32)
 endif()
 
-# Core library: holds all globe sources (AUTOMOC-enabled) so both the app and
-# the tests can link the same code. (An executable target cannot be linked into
-# another target, which is why this is a STATIC library.)
+# Legacy globe sources (AUTOMOC-enabled). Kept as a STATIC library so the
+# offscreen render tests (render_shot, test_sunview) can still link the old
+# GlobeWindow/GlobeRenderer/GlobeView stack while the shipped app uses the
+# celestial library directly. Slated for removal in the Phase 1 cleanup task.
 qt_add_library(globe_lib STATIC
     src/globe/GlobeWindow.h
     src/globe/GlobeWindow.cpp
@@ -61,8 +64,6 @@ qt_add_library(globe_lib STATIC
     src/globe/render/GlobeRenderer.cpp
     src/globe/render/GlobeView.h
     src/globe/render/GlobeView.cpp
-    src/globe/render/TimeController.h
-    src/globe/render/TimeController.cpp
 )
 
 target_include_directories(globe_lib PUBLIC
@@ -77,20 +78,20 @@ target_link_libraries(globe_lib PUBLIC
     Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
 )
 
-qt_add_executable(globe
+qt_add_executable(earth
     WIN32 MACOSX_BUNDLE
-    main.cpp
+    src/apps/earth/main.cpp
 )
-target_link_libraries(globe PRIVATE globe_lib)
+target_link_libraries(earth PRIVATE celestial)
 
-qt_add_translations(TARGETS globe TS_FILES globe_zh_CN.ts)
+qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
 
-install(TARGETS globe
+install(TARGETS earth
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-qt_generate_deploy_app_script(TARGET globe OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
+qt_generate_deploy_app_script(TARGET earth OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 install(SCRIPT ${deploy_script})
 
 # Tests
