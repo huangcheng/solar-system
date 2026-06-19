@@ -25,6 +25,8 @@ int ConfigManager::fpsCap() const { return m_fpsCap; }
 void ConfigManager::setFpsCap(int v) { m_fpsCap = (v == 30 ? 30 : 60); }
 double ConfigManager::cloudSpeed() const { return m_cloudSpeed; }
 void ConfigManager::setCloudSpeed(double v) { m_cloudSpeed = v; }
+int ConfigManager::rotationSpeed() const { return m_rotationSpeed; }
+void ConfigManager::setRotationSpeed(int v) { m_rotationSpeed = (v < 1 ? 1 : v); }
 bool ConfigManager::locationOptIn() const { return m_locationOptIn; }
 void ConfigManager::setLocationOptIn(bool v) { m_locationOptIn = v; }
 double ConfigManager::homeLongitude() const { return m_homeLon; }
@@ -40,6 +42,7 @@ void ConfigManager::load() {
     m_tier = static_cast<QualityTier>(obj.value("quality").toInt(static_cast<int>(m_tier)));
     m_fpsCap = (obj.value("fpsCap").toInt(m_fpsCap) == 30 ? 30 : 60);
     m_cloudSpeed = obj.value("cloudSpeed").toDouble(m_cloudSpeed);
+    { const int rs = obj.value("rotationSpeed").toInt(m_rotationSpeed); m_rotationSpeed = (rs < 1 ? 1 : rs); }
     m_locationOptIn = obj.value("locationOptIn").toBool(m_locationOptIn);
     m_homeLon = obj.value("homeLongitude").toDouble(m_homeLon);
 }
@@ -49,6 +52,7 @@ void ConfigManager::save() {
     o["windowX"] = m_x; o["windowY"] = m_y; o["diameter"] = m_diameter;
     o["quality"] = static_cast<int>(m_tier); o["fpsCap"] = m_fpsCap;
     o["cloudSpeed"] = m_cloudSpeed; o["locationOptIn"] = m_locationOptIn;
+    o["rotationSpeed"] = m_rotationSpeed;
     o["homeLongitude"] = m_homeLon;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))

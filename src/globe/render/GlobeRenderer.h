@@ -17,6 +17,7 @@ public:
     void setAssets(AssetManager *a);
     void setSun(const SunModel *s) { m_sun = s; }
     void setCamera(const CameraController *c) { m_cam = c; }
+    void setRotationSpeedRatio(int r) { m_rotRatio = (r < 1 ? 1 : r); } // 1 = true 24h
     void setQualityTier(int maxSize);
     void render();
 
@@ -35,6 +36,7 @@ private:
     AssetManager *m_assets = nullptr;
     const SunModel *m_sun = nullptr;
     const CameraController *m_cam = nullptr;
+    int m_rotRatio = 960;   // rotation x real-time (960 -> ~1 turn / 90 s)
     int m_tierMaxSize = 8192;
     double m_centerLon = 0.0;
     bool m_useCenterLon = false;

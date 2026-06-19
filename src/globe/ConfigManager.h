@@ -16,6 +16,7 @@ public:
     QualityTier qualityTier() const; void setQualityTier(QualityTier t);
     int fpsCap() const;         void setFpsCap(int v);
     double cloudSpeed() const;  void setCloudSpeed(double v);
+    int rotationSpeed() const;  void setRotationSpeed(int v); // ratio over real-time (1 = true 24h)
     bool locationOptIn() const; void setLocationOptIn(bool v);
     double homeLongitude() const; void setHomeLongitude(double v);
 
@@ -25,6 +26,7 @@ public:
 private:
     QString m_path;
     int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
+    int m_rotationSpeed = 960;   // rotation x real-time (960 -> ~1 turn / 90 s)
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;

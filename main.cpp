@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
     w.view()->renderer().setAssets(&assets);
     w.view()->renderer().setSun(&sun);
     w.view()->renderer().setCamera(&camera);
+    w.view()->renderer().setRotationSpeedRatio(config.rotationSpeed());
     {
         const int tierMax = (config.qualityTier() == ConfigManager::HD) ? 8192 :
                             (config.qualityTier() == ConfigManager::Medium) ? 4096 : 2048;
