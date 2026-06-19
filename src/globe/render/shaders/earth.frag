@@ -27,10 +27,22 @@ uniform float uHasSpecular;
 uniform vec3  uHomeDir;     // ECEF unit vector of the granted user location
 uniform float uHasHome;     // 1 when a location is available
 uniform float uTime;        // seconds (small range), for the pulse
+uniform float uShowGrid;    // 1 when the lat/lon grid overlay is enabled
 
 const float kReliefStrength = 2.2;   // how strongly the normal map tilts the normal
 const float kReliefShade    = 1.7;   // how much a slope darkens/brightens the day map
 const float kGlint          = 0.30;  // ocean sun-glint intensity (low = not glassy)
+
+const float kGridStepRad = 3.14159265 / 12.0;     // 15 degrees
+const float kGridLinePx  = 1.2;                   // ~1 px anti-aliased line
+const vec3  kGridColor   = vec3(1.0, 0.70, 0.28); // warm amber
+const float kGridAlpha   = 0.22;
+
+float gridLine(float coord) {
+    float d = abs(fract(coord / kGridStepRad + 0.5) - 0.5) * kGridStepRad;
+    float w = fwidth(coord) * kGridLinePx;
+    return 1.0 - smoothstep(0.0, w, d);
+}
 
 vec2 sphereToUV(vec3 n) {
     float lon = atan(n.y, n.x);
@@ -96,6 +108,18 @@ void main() {
         vec3 H = normalize(sun + viewDir);
         float spec = pow(max(dot(N, H), 0.0), 70.0);
         color += vec3(0.7, 0.82, 1.0) * spec * water * dayFactor * kGlint;
+    }
+
+    // Optional lat/lon grid overlay (15° spacing, warm amber, anti-aliased).
+    if (uShowGrid > 0.5) {
+        float lat = asin(clamp(nObj.z, -1.0, 1.0));
+        float lon = atan(nObj.y, nObj.x);
+        float grid = max(gridLine(lat), gridLine(lon));
+
+        // Fade toward the limb so lines don't bunch or hard-edge at the disc edge.
+        grid *= smoothstep(0.0, 0.15, facing);
+
+        color = mix(color, kGridColor, grid * kGridAlpha);
     }
 
     // "You are here" beacon at the granted location (ECEF -> glued to the
