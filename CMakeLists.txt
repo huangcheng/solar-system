@@ -34,6 +34,8 @@ qt_add_library(celestial STATIC
     src/celestial/BodyConfig.cpp
     src/celestial/CelestialBody.h
     src/celestial/CelestialBody.cpp
+    src/celestial/CelestialWidget.h
+    src/celestial/CelestialWidget.cpp
 )
 
 target_include_directories(celestial PUBLIC
@@ -42,7 +44,7 @@ target_include_directories(celestial PUBLIC
 )
 
 target_link_libraries(celestial PUBLIC
-    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::Positioning
+    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
 )
 
 if(WIN32)
