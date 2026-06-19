@@ -21,6 +21,8 @@ public:
     double homeLatitude() const;  void setHomeLatitude(double v);
     double homeLongitude() const; void setHomeLongitude(double v);
     bool showGrid() const;        void setShowGrid(bool v);
+    QString nightMode() const;    void setNightMode(const QString &v);
+    QString language() const;     void setLanguage(const QString &v);
 
     void load();
     void save();
@@ -33,6 +35,8 @@ private:
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
     bool m_showGrid = false;
+    QString m_nightMode = QStringLiteral("simple");
+    QString m_language  = QStringLiteral("en");
     double m_homeLat = 0.0, m_homeLon = 0.0;
     static int clampDiameter(int v);
 };

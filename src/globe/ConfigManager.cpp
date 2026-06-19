@@ -35,6 +35,10 @@ double ConfigManager::homeLatitude() const { return m_homeLat; }
 void ConfigManager::setHomeLatitude(double v) { m_homeLat = v; }
 bool ConfigManager::showGrid() const { return m_showGrid; }
 void ConfigManager::setShowGrid(bool v) { m_showGrid = v; }
+QString ConfigManager::nightMode() const { return m_nightMode; }
+void ConfigManager::setNightMode(const QString &v) { m_nightMode = (v == QStringLiteral("texture") ? v : QStringLiteral("simple")); }
+QString ConfigManager::language() const { return m_language; }
+void ConfigManager::setLanguage(const QString &v) { m_language = (v == QStringLiteral("zh_CN") ? v : QStringLiteral("en")); }
 
 void ConfigManager::load() {
     QFile f(m_path);
@@ -51,6 +55,10 @@ void ConfigManager::load() {
     m_homeLat = obj.value("homeLatitude").toDouble(m_homeLat);
     m_homeLon = obj.value("homeLongitude").toDouble(m_homeLon);
     m_showGrid = obj.value("showGrid").toBool(m_showGrid);
+    m_nightMode = obj.value("nightMode").toString(m_nightMode) == QStringLiteral("texture")
+                      ? QStringLiteral("texture") : QStringLiteral("simple");
+    m_language  = obj.value("language").toString(m_language) == QStringLiteral("zh_CN")
+                      ? QStringLiteral("zh_CN") : QStringLiteral("en");
 }
 
 void ConfigManager::save() {
@@ -62,6 +70,8 @@ void ConfigManager::save() {
     o["homeLatitude"] = m_homeLat;
     o["homeLongitude"] = m_homeLon;
     o["showGrid"] = m_showGrid;
+    o["nightMode"] = m_nightMode;
+    o["language"]  = m_language;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))
         f.write(QJsonDocument(o).toJson(QJsonDocument::Indented));

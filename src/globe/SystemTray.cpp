@@ -14,9 +14,7 @@ SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
     menu->addAction(tr("Reset View"), this, &SystemTray::resetView);
     menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
     menu->addSeparator();
-    m_showGridAction = menu->addAction(tr("Show Grid"));
-    m_showGridAction->setCheckable(true);
-    connect(m_showGridAction, &QAction::toggled, this, &SystemTray::toggleShowGrid);
+    menu->addAction(tr("Settings..."), this, &SystemTray::openSettings);
     menu->addSeparator();
     menu->addAction(tr("About"), this, [] {
         // v1: About is a tray message. A real dialog can replace this later.
@@ -32,6 +30,3 @@ void SystemTray::setSolarTooltip(const QString &text) {
     setToolTip(text);
 }
 
-void SystemTray::setShowGridChecked(bool on) {
-    if (m_showGridAction) m_showGridAction->setChecked(on);
-}

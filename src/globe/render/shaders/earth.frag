@@ -28,6 +28,7 @@ uniform vec3  uHomeDir;     // ECEF unit vector of the granted user location
 uniform float uHasHome;     // 1 when a location is available
 uniform float uTime;        // seconds (small range), for the pulse
 uniform float uShowGrid;    // 1 when the lat/lon grid overlay is enabled
+uniform float uUseNightTexture; // 1 = use night texture, 0 = simple dim day map
 
 const float kReliefStrength = 2.2;   // how strongly the normal map tilts the normal
 const float kReliefShade    = 1.7;   // how much a slope darkens/brightens the day map
@@ -81,7 +82,8 @@ void main() {
     float dayFactor = smoothstep(-0.10, 0.20, cosGeo);
 
     vec3 day   = (uHasDay   > 0.5) ? texture(uDay,   uv).rgb : vec3(0.15, 0.35, 0.70);
-    vec3 night = (uHasNight > 0.5) ? texture(uNight, uv).rgb : vec3(0.0);
+    vec3 night = (uHasNight > 0.5 && uUseNightTexture > 0.5)
+                     ? texture(uNight, uv).rgb : vec3(0.0);
 
     // Relief shading: how much the bumped slope faces the sun vs the flat sphere.
     // Centered on 1.0 so flat ground is unchanged; the effect is strongest near

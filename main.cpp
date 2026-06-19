@@ -1,6 +1,7 @@
 #include "globe/GlobeWindow.h"
 #include "globe/ConfigManager.h"
 #include "globe/SystemTray.h"
+#include "globe/SettingsDialog.h"
 #include "render/SunModel.h"
 #include "render/CameraController.h"
 #include "render/AssetManager.h"
@@ -11,10 +12,21 @@
 #include <QTimer>
 #include <QDebug>
 #include <QDateTime>
+#include <QTranslator>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("Globe");
+
+    QTranslator translator;
+    {
+        ConfigManager tmpConfig;
+        const QString lang = tmpConfig.language();
+        if (lang == QStringLiteral("zh_CN")) {
+            if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))
+                app.installTranslator(&translator);
+        }
+    }
 
     ConfigManager config;
     AssetManager assets;  // loads from <exedir>/textures (shipped), then user-local, then procedural fallback
@@ -42,6 +54,7 @@ int main(int argc, char *argv[]) {
     if (config.locationOptIn()) location.start();
     w.view()->renderer().setHomeLocation(config.homeLatitude(), config.homeLongitude(), true);
     w.view()->renderer().setShowGrid(config.showGrid());
+    w.view()->renderer().setUseNightTexture(config.nightMode() == QStringLiteral("texture"));
     QObject::connect(&location, &LocationProvider::locationChanged, &w,
         [&w](double lat, double lon) { w.view()->renderer().setHomeLocation(lat, lon, true); });
 
@@ -52,16 +65,23 @@ int main(int argc, char *argv[]) {
     w.setConfig(&config);
 
     SystemTray tray;
-    tray.setShowGridChecked(config.showGrid());
+    SettingsDialog settingsDialog(&config, &w);
     QObject::connect(&tray, &SystemTray::toggleVisibility, &w,
         [&w] { w.isVisible() ? w.hide() : w.show(); });
-    QObject::connect(&tray, &SystemTray::toggleShowGrid, &w,
-        [&w, &config](bool on) {
-            config.setShowGrid(on);
-            config.save();
-            w.view()->renderer().setShowGrid(on);
+    QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &w,
+        [&w, &config, &translator, &app]() {
+            const bool useTexture = config.nightMode() == QStringLiteral("texture");
+            w.view()->renderer().setShowGrid(config.showGrid());
+            w.view()->renderer().setUseNightTexture(useTexture);
+            app.removeTranslator(&translator);
+            if (config.language() == QStringLiteral("zh_CN")) {
+                if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))
+                    app.installTranslator(&translator);
+            }
             w.view()->update();
         });
+    QObject::connect(&tray, &SystemTray::openSettings, &w,
+        [&settingsDialog]() { settingsDialog.exec(); });
     QObject::connect(&tray, &SystemTray::resetView, &w, [&w, &camera] {
         camera.reset();
         w.view()->renderer().clearCenterLongitude();

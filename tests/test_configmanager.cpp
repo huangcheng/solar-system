@@ -11,6 +11,8 @@ private slots:
         c.setDiameter(420); c.setQualityTier(ConfigManager::HD);
         c.setFpsCap(30); c.setLocationOptIn(true); c.setHomeLongitude(116.4);
         c.setShowGrid(true);
+        c.setNightMode(QStringLiteral("texture"));
+        c.setLanguage(QStringLiteral("zh_CN"));
         c.save();
 
         ConfigManager c2(dir.path());
@@ -22,6 +24,8 @@ private slots:
         QVERIFY(c2.locationOptIn());
         QCOMPARE(c2.homeLongitude(), 116.4);
         QVERIFY(c2.showGrid());
+        QCOMPARE(c2.nightMode(), QStringLiteral("texture"));
+        QCOMPARE(c2.language(), QStringLiteral("zh_CN"));
     }
     void clampsDiameter() {
         QTemporaryDir dir;

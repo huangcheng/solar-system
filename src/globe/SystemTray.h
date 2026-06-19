@@ -8,14 +8,10 @@ class SystemTray : public QSystemTrayIcon {
 public:
     explicit SystemTray(QObject *parent = nullptr);
     void setSolarTooltip(const QString &text);
-    void setShowGridChecked(bool on);
 signals:
     void toggleVisibility();
     void resetView();
     void centerOnMe();
-    void toggleShowGrid(bool on);
+    void openSettings();
     void quit();
-
-private:
-    QAction *m_showGridAction = nullptr;
 };
