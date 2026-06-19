@@ -35,17 +35,14 @@ int main(int argc, char *argv[]) {
     w.move(config.windowX(), config.windowY());
     w.resize(config.diameter(), config.diameter());
 
-    // Location: request OS permission (Qt Positioning). The pulsing beacon shows
-    // at the granted location; until a fix arrives it shows the configured home.
+    // Location: opt-in OS geolocation (Qt Positioning). The pulsing beacon shows
+    // at the configured home by default; if the user opts in and a valid fix
+    // arrives, it overrides with the real coordinates.
     LocationProvider location;
-    location.start();
+    if (config.locationOptIn()) location.start();
     w.view()->renderer().setHomeLocation(config.homeLatitude(), config.homeLongitude(), true);
     QObject::connect(&location, &LocationProvider::locationChanged, &w,
         [&w](double lat, double lon) { w.view()->renderer().setHomeLocation(lat, lon, true); });
-    QObject::connect(&location, &LocationProvider::permissionChanged, &w,
-        [&w](LocationProvider::Permission p) {
-            if (p == LocationProvider::Denied) w.view()->renderer().setHomeLocation(0, 0, false);
-        });
 
     TimeController time(&sun);
     time.setTarget(w.view());
