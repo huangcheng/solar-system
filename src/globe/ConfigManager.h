@@ -30,7 +30,7 @@ public:
 private:
     QString m_path;
     int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
-    int m_rotationSpeed = 2880;  // rotation x real-time (2880 -> ~1 turn / 30 s)
+    int m_rotationSpeed = 1;     // 1 = static (real-time day/night); >1 adds a visible spin
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;

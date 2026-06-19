@@ -146,13 +146,6 @@ QMatrix4x4 GlobeRenderer::sunCentricBaseRotation(double subSolarLatDeg, double s
     return m;
 }
 
-QMatrix4x4 GlobeRenderer::baseRotation() const {
-    if (!m_sun) return {};
-    if (m_useCenterLon)
-        return sunCentricBaseRotation(0.0, m_centerLon); // home meridian at +Z
-    return sunCentricBaseRotation(m_sun->subSolarLatitude(), m_sun->subSolarLongitude());
-}
-
 void GlobeRenderer::initialize(QOpenGLFunctions_3_3_Core *gl) {
     m_gl = gl;
     m_earthProg = makeProgram("earth.vert", "earth.frag");
@@ -194,24 +187,36 @@ void GlobeRenderer::render() {
     QMatrix4x4 view;
     view.translate(0.0f, 0.0f, -3.25f);   // globe fills the whole disc — no black rim
 
-    const QMatrix4x4 base = baseRotation();
+    // Day/night follows the REAL wall clock. SunModel gives the true sub-solar
+    // point (it drifts ~15 deg/hour), so the globe always shows Earth's ACTUAL
+    // current day/night -- not a time-lapse. The sun-centric framing points the
+    // lit hemisphere at the camera, so the disc always reads like the real planet
+    // (about half lit) and never wanders onto the dark side. (An earlier build
+    // ran an accelerated clock that fast-forwarded the terminator until whole
+    // continents sat in night -- that was the "more than half in night" bug.)
+    const double subLat = m_sun ? m_sun->subSolarLatitude()  : 0.0;
+    const double subLon = m_sun ? m_sun->subSolarLongitude() : 0.0;
+    const QMatrix4x4 base = m_useCenterLon
+            ? sunCentricBaseRotation(0.0, m_centerLon)        // home meridian at +Z
+            : sunCentricBaseRotation(subLat, subLon);          // sub-solar at +Z
     const QMatrix4x4 offset = m_cam ? m_cam->offsetRotation() : QMatrix4x4();
     const float zoom = m_cam ? m_cam->zoom() : 1.0f;
-    // Tilt the sun ~50deg off the camera axis: the terminator becomes a visible
-    // crescent and the globe turns in real time (continents drift through
-    // day/night) instead of the sun being pinned dead-center (which looked locked).
+    // Tilt the sun ~50deg off the camera axis so the terminator reads as a
+    // visible crescent instead of the sun being pinned dead-centre.
     QMatrix4x4 tilt; tilt.rotate(50.0f, 0.0f, 1.0f, 0.0f);
     const QMatrix4x4 oriented = offset * tilt * base;
-    // Continuous spin about the polar axis so the globe visibly turns, scaled
-    // by a real-time ratio (m_rotRatio: 1 = true 24h, 2880 = ~1 turn/30s). The
-    // day/night terminator stays real-time: sunWorld is derived from `oriented`
-    // WITHOUT the spin, so the sun stays fixed while Earth rotates under it.
-    // NOTE: compute in DOUBLE. Casting epoch-ms to float loses so much precision
-    // (ULP is minutes) that the angle would be frozen between frames.
-    const double spinDeg = std::fmod(double(QDateTime::currentMSecsSinceEpoch())
-                                    * (360.0 / 86400000.0) * double(m_rotRatio), 360.0);
-    QMatrix4x4 spin; spin.rotate(float(spinDeg), 0.0f, 0.0f, 1.0f);
-    QMatrix4x4 model = oriented * spin;
+
+    // Static by default (the globe shows the real "now"). rotationSpeed > 1 adds
+    // an optional polar-axis spin for visible motion: continents drift, but the
+    // sun stays fixed in world (sunWorld below omits the spin), so the day/night
+    // split and the mostly-lit framing are unaffected -- it never spins into night.
+    QMatrix4x4 model = oriented;
+    if (m_rotRatio > 1) {
+        const double spinDeg = std::fmod(double(QDateTime::currentMSecsSinceEpoch())
+                                        * (360.0 / 86400000.0) * double(m_rotRatio), 360.0);
+        QMatrix4x4 spin; spin.rotate(float(spinDeg), 0.0f, 0.0f, 1.0f);
+        model = oriented * spin;
+    }
     model.scale(zoom);   // globe fills the widget disc edge-to-edge (no black background)
 
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
