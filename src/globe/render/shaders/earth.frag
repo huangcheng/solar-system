@@ -98,17 +98,28 @@ void main() {
         color += vec3(0.7, 0.82, 1.0) * spec * water * dayFactor * kGlint;
     }
 
-    // Pulsing "you are here" beacon at the granted location (ECEF, so it is
-    // glued to the surface and rotates with the globe; auto-hidden on the far
-    // side because those fragments are depth-occluded).
+    // "You are here" beacon at the granted location (ECEF -> glued to the
+    // surface, rotates with the globe, auto-hidden on the far side by depth).
+    // Soft additive glow + white-hot pinpoint + subtle crisp ring: reads like a
+    // modern location dot and blends with the 3D surface instead of stamping on.
     if (uHasHome > 0.5) {
-        float dd = acos(clamp(dot(nObj, normalize(uHomeDir)), -1.0, 1.0)); // angular dist
-        float pulse = 0.5 + 0.5 * sin(uTime * 3.0);
-        float core  = smoothstep(0.020, 0.012, dd);                 // solid dot
-        float ringR = 0.030 + 0.045 * pulse;                        // expanding ring
-        float ring  = smoothstep(0.006, 0.0, abs(dd - ringR));
-        float m = max(core, ring * (0.35 + 0.65 * pulse));
-        color = mix(color, vec3(0.15, 0.95, 1.0), clamp(m, 0.0, 1.0)); // cyan beacon
+        float dd = acos(clamp(dot(nObj, normalize(uHomeDir)), -1.0, 1.0)); // angular dist (rad)
+        float pulse = 0.5 + 0.5 * sin(uTime * 2.5);
+
+        vec3 beacon = vec3(0.35, 0.85, 1.0);                       // soft cyan
+
+        // smooth additive halo (exponential falloff -> no hard edges)
+        float glowR = 0.045 + 0.015 * pulse;
+        float glow  = exp(-3.0 * (dd / glowR) * (dd / glowR));
+        color += beacon * glow * (0.30 + 0.30 * pulse);
+
+        // thin crisp accent ring for definition
+        float ring = exp(-((dd - 0.022) / 0.004) * ((dd - 0.022) / 0.004)) * 0.55;
+        color += beacon * ring;
+
+        // bright white-hot pinpoint core
+        float core = smoothstep(0.010, 0.004, dd);
+        color = mix(color, vec3(1.0), core);
     }
 
     FragColor = vec4(color, 1.0);
