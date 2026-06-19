@@ -196,12 +196,14 @@ void GlobeRenderer::render() {
     QMatrix4x4 tilt; tilt.rotate(50.0f, 0.0f, 1.0f, 0.0f);
     const QMatrix4x4 oriented = offset * tilt * base;
     // Continuous spin about the polar axis so the globe visibly turns, scaled
-    // by a real-time ratio (m_rotRatio: 1 = true 24h, 960 = ~1 turn/90s). The
+    // by a real-time ratio (m_rotRatio: 1 = true 24h, 2880 = ~1 turn/30s). The
     // day/night terminator stays real-time: sunWorld is derived from `oriented`
     // WITHOUT the spin, so the sun stays fixed while Earth rotates under it.
-    const float spinDeg = std::fmod(float(QDateTime::currentMSecsSinceEpoch())
-                                    * (360.0f / 86400000.0f) * float(m_rotRatio), 360.0f);
-    QMatrix4x4 spin; spin.rotate(spinDeg, 0.0f, 0.0f, 1.0f);
+    // NOTE: compute in DOUBLE. Casting epoch-ms to float loses so much precision
+    // (ULP is minutes) that the angle would be frozen between frames.
+    const double spinDeg = std::fmod(double(QDateTime::currentMSecsSinceEpoch())
+                                    * (360.0 / 86400000.0) * double(m_rotRatio), 360.0);
+    QMatrix4x4 spin; spin.rotate(float(spinDeg), 0.0f, 0.0f, 1.0f);
     QMatrix4x4 model = oriented * spin;
     model.scale(zoom);   // globe fills the widget disc edge-to-edge (no black background)
 
