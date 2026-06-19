@@ -14,14 +14,13 @@ namespace {
 constexpr double kPi = 3.14159265358979323846;
 
 // Load a GLSL source file from disk. Searches a few candidate directories so
-// the same code works for an installed app (<exedir>/shaders), a dev build
-// (../src/celestial/shaders), and a legacy Qt resource (:/shaders).
+// the same code works for an installed app (<exedir>/shaders) and a dev build
+// (../src/celestial/shaders).
 QByteArray loadShaderSource(const QString &name) {
     const QStringList dirs = {
         QCoreApplication::applicationDirPath() + "/shaders",
         QCoreApplication::applicationDirPath() + "/../src/celestial/shaders",
         QCoreApplication::applicationDirPath() + "/../../src/celestial/shaders",
-        QStringLiteral(":/shaders"),
     };
     for (const QString &d : dirs) {
         QFile f(d + "/" + name);

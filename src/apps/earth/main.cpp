@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 
     auto refreshTooltip = [&sun, &tray] {
         sun.setUtc(QDateTime::currentDateTimeUtc());
-        tray.setSolarTooltip(QCoreApplication::translate("GlobeWindow", "Sun sub-point: %1°, %2°")
+        tray.setSolarTooltip(QCoreApplication::translate("CelestialWidget", "Sun sub-point: %1°, %2°")
             .arg(sun.subSolarLatitude(), 0, 'f', 1)
             .arg(sun.subSolarLongitude(), 0, 'f', 1));
     };
