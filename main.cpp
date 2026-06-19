@@ -5,6 +5,7 @@
 #include "render/CameraController.h"
 #include "render/AssetManager.h"
 #include "render/TimeController.h"
+#include "globe/LocationProvider.h"
 #include <QApplication>
 #include <QStandardPaths>
 #include <QTimer>
@@ -34,6 +35,18 @@ int main(int argc, char *argv[]) {
     w.move(config.windowX(), config.windowY());
     w.resize(config.diameter(), config.diameter());
 
+    // Location: request OS permission (Qt Positioning). The pulsing beacon shows
+    // at the granted location; until a fix arrives it shows the configured home.
+    LocationProvider location;
+    location.start();
+    w.view()->renderer().setHomeLocation(config.homeLatitude(), config.homeLongitude(), true);
+    QObject::connect(&location, &LocationProvider::locationChanged, &w,
+        [&w](double lat, double lon) { w.view()->renderer().setHomeLocation(lat, lon, true); });
+    QObject::connect(&location, &LocationProvider::permissionChanged, &w,
+        [&w](LocationProvider::Permission p) {
+            if (p == LocationProvider::Denied) w.view()->renderer().setHomeLocation(0, 0, false);
+        });
+
     TimeController time(&sun);
     time.setTarget(w.view());
     time.setFpsCap(config.fpsCap());
@@ -46,13 +59,13 @@ int main(int argc, char *argv[]) {
     QObject::connect(&tray, &SystemTray::resetView, &w, [&w, &camera] {
         camera.reset();
         w.view()->renderer().clearCenterLongitude();
-        w.resize(360, 360);
+        w.resize(220, 220);
         w.view()->update();
     });
     QObject::connect(&tray, &SystemTray::centerOnMe, &w, [&w, &camera, &config] {
         camera.reset();
         w.view()->renderer().setCenterLongitude(config.homeLongitude());
-        w.resize(360, 360);
+        w.resize(220, 220);
         w.view()->update();
     });
 

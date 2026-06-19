@@ -24,6 +24,9 @@ uniform float uHasDay;
 uniform float uHasNight;
 uniform float uHasNormal;
 uniform float uHasSpecular;
+uniform vec3  uHomeDir;     // ECEF unit vector of the granted user location
+uniform float uHasHome;     // 1 when a location is available
+uniform float uTime;        // seconds (small range), for the pulse
 
 const float kReliefStrength = 2.2;   // how strongly the normal map tilts the normal
 const float kReliefShade    = 1.7;   // how much a slope darkens/brightens the day map
@@ -93,6 +96,19 @@ void main() {
         vec3 H = normalize(sun + viewDir);
         float spec = pow(max(dot(N, H), 0.0), 70.0);
         color += vec3(0.7, 0.82, 1.0) * spec * water * dayFactor * kGlint;
+    }
+
+    // Pulsing "you are here" beacon at the granted location (ECEF, so it is
+    // glued to the surface and rotates with the globe; auto-hidden on the far
+    // side because those fragments are depth-occluded).
+    if (uHasHome > 0.5) {
+        float dd = acos(clamp(dot(nObj, normalize(uHomeDir)), -1.0, 1.0)); // angular dist
+        float pulse = 0.5 + 0.5 * sin(uTime * 3.0);
+        float core  = smoothstep(0.020, 0.012, dd);                 // solid dot
+        float ringR = 0.030 + 0.045 * pulse;                        // expanding ring
+        float ring  = smoothstep(0.006, 0.0, abs(dd - ringR));
+        float m = max(core, ring * (0.35 + 0.65 * pulse));
+        color = mix(color, vec3(0.15, 0.95, 1.0), clamp(m, 0.0, 1.0)); // cyan beacon
     }
 
     FragColor = vec4(color, 1.0);

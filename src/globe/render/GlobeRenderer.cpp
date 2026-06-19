@@ -47,6 +47,10 @@ std::unique_ptr<QOpenGLShaderProgram> GlobeRenderer::makeProgram(const QString &
 
 GlobeRenderer::GlobeRenderer() = default;
 
+void GlobeRenderer::setHomeLocation(double latDeg, double lonDeg, bool on) {
+    m_homeLat = latDeg; m_homeLon = lonDeg; m_hasHome = on;
+}
+
 void GlobeRenderer::buildSphere(int stacks, int slices) {
     QVector<float> verts; QVector<GLuint> idx;
     for (int i = 0; i <= stacks; ++i) {
@@ -225,6 +229,17 @@ void GlobeRenderer::render() {
     if (m_texNight)   { m_texNight->bind(1);     m_earthProg->setUniformValue("uNight", 1); }
     if (m_texNormal)  { m_texNormal->bind(3);    m_earthProg->setUniformValue("uNormal", 3); }
     if (m_texSpecular){ m_texSpecular->bind(4);  m_earthProg->setUniformValue("uSpecular", 4); }
+    // Pulsing "you are here" marker (ECEF direction of the granted location).
+    {
+        const double la = qDegreesToRadians(m_homeLat), lo = qDegreesToRadians(m_homeLon);
+        const QVector3D homeDir(float(std::cos(la) * std::cos(lo)),
+                                float(std::cos(la) * std::sin(lo)),
+                                float(std::sin(la)));
+        m_earthProg->setUniformValue("uHomeDir", homeDir);
+        m_earthProg->setUniformValue("uHasHome", m_hasHome ? 1.0f : 0.0f);
+        // Keep uTime small (mod 10 min) so float seconds-since-epoch stays precise.
+        m_earthProg->setUniformValue("uTime", float(std::fmod(QDateTime::currentMSecsSinceEpoch() / 1000.0, 600.0)));
+    }
     m_gl->glBindVertexArray(m_vao);
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
 

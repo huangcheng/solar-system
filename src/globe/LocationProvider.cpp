@@ -1,17 +1,28 @@
 #include "LocationProvider.h"
+#include <QGeoPositionInfoSource>
+#include <QGeoPositionInfo>
 
 LocationProvider::LocationProvider(QObject *parent) : QObject(parent) {}
 
 void LocationProvider::requestPermission() {
-#ifdef Q_OS_WIN
-    // TODO(impl): WinRT Windows.Devices.Geolocation — set permission on result.
-#endif
-#ifdef Q_OS_MAC
-    // TODO(impl): CoreLocation CLLocationManager.
-#endif
-#ifdef Q_OS_LINUX
-    // TODO(impl): GeoClue2.
-#endif
+    start();  // Qt Positioning handles the OS permission prompt
+}
+
+void LocationProvider::start() {
+    if (m_src) return;
+    auto *src = QGeoPositionInfoSource::createDefaultSource(this);
+    if (!src) return;
+    m_src = src;
+    connect(src, &QGeoPositionInfoSource::positionUpdated, this,
+        [this](const QGeoPositionInfo &info) {
+            if (!info.isValid()) return;
+            const QGeoCoordinate c = info.coordinate();
+            if (!c.isValid()) return;
+            if (m_perm != Granted) setPermission(Granted);
+            setCoordinates(c.latitude(), c.longitude());
+        });
+    src->setUpdateInterval(60000);
+    src->startUpdates();
 }
 
 void LocationProvider::setPermission(Permission p) {

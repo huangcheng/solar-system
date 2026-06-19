@@ -18,6 +18,7 @@ public:
     double cloudSpeed() const;  void setCloudSpeed(double v);
     int rotationSpeed() const;  void setRotationSpeed(int v); // ratio over real-time (1 = true 24h)
     bool locationOptIn() const; void setLocationOptIn(bool v);
+    double homeLatitude() const;  void setHomeLatitude(double v);
     double homeLongitude() const; void setHomeLongitude(double v);
 
     void load();
@@ -30,6 +31,6 @@ private:
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
-    double m_homeLon = 0.0;
+    double m_homeLat = 0.0, m_homeLon = 0.0;
     static int clampDiameter(int v);
 };

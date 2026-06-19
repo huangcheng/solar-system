@@ -31,6 +31,8 @@ bool ConfigManager::locationOptIn() const { return m_locationOptIn; }
 void ConfigManager::setLocationOptIn(bool v) { m_locationOptIn = v; }
 double ConfigManager::homeLongitude() const { return m_homeLon; }
 void ConfigManager::setHomeLongitude(double v) { m_homeLon = v; }
+double ConfigManager::homeLatitude() const { return m_homeLat; }
+void ConfigManager::setHomeLatitude(double v) { m_homeLat = v; }
 
 void ConfigManager::load() {
     QFile f(m_path);
@@ -44,6 +46,7 @@ void ConfigManager::load() {
     m_cloudSpeed = obj.value("cloudSpeed").toDouble(m_cloudSpeed);
     { const int rs = obj.value("rotationSpeed").toInt(m_rotationSpeed); m_rotationSpeed = (rs < 1 ? 1 : rs); }
     m_locationOptIn = obj.value("locationOptIn").toBool(m_locationOptIn);
+    m_homeLat = obj.value("homeLatitude").toDouble(m_homeLat);
     m_homeLon = obj.value("homeLongitude").toDouble(m_homeLon);
 }
 
@@ -53,6 +56,7 @@ void ConfigManager::save() {
     o["quality"] = static_cast<int>(m_tier); o["fpsCap"] = m_fpsCap;
     o["cloudSpeed"] = m_cloudSpeed; o["locationOptIn"] = m_locationOptIn;
     o["rotationSpeed"] = m_rotationSpeed;
+    o["homeLatitude"] = m_homeLat;
     o["homeLongitude"] = m_homeLon;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))

@@ -16,6 +16,10 @@ public:
     Permission permission() const { return m_perm; }
     void setPermission(Permission p);
 
+    // Start Qt Positioning (default source). Triggers the OS location-permission
+    // prompt; on the first valid fix it sets permission=Granted + coordinates.
+    void start();
+
     bool isEnabled() const;
     double latitude() const { return m_lat; }
     double longitude() const { return m_lon; }
@@ -28,4 +32,5 @@ signals:
 private:
     Permission m_perm = Unknown;
     double m_lat = 0.0, m_lon = 0.0;
+    class QGeoPositionInfoSource *m_src = nullptr;
 };

@@ -4,7 +4,7 @@ project(globe LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets LinguistTools Test)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets Positioning LinguistTools Test)
 
 qt_standard_project_setup()
 
@@ -43,7 +43,7 @@ target_include_directories(globe_lib PUBLIC
 )
 
 target_link_libraries(globe_lib PUBLIC
-    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
+    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
 )
 
 if(WIN32)
