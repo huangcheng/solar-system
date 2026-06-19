@@ -31,7 +31,7 @@ public:
 private:
     QString m_path;
     int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
-    int m_rotationSpeed = 120;   // 1 = real-time (exact day/night); 120 = visible spin, day/night ~correct for minutes
+    int m_rotationSpeed = 2880;  // globe-toy spin: sun fixed at real position, Earth spins under it (2880x = ~1 turn/30s)
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
