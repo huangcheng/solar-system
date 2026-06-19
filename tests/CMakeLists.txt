@@ -15,6 +15,8 @@ globe_add_test(test_sunview)
 
 globe_add_test(test_locationprovider)
 
+globe_add_test(test_bodyconfig)
+
 # Offscreen render harness (not a ctest — needs a GL context). Built on demand
 # to capture a globe frame to PNG for visual inspection of shader changes.
 add_executable(render_shot render_shot.cpp)

@@ -30,6 +30,8 @@ qt_add_library(celestial STATIC
     src/celestial/PlatformWindow.cpp
     src/celestial/LocationProvider.h
     src/celestial/LocationProvider.cpp
+    src/celestial/BodyConfig.h
+    src/celestial/BodyConfig.cpp
 )
 
 target_include_directories(celestial PUBLIC
