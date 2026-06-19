@@ -51,6 +51,8 @@ void GlobeRenderer::setHomeLocation(double latDeg, double lonDeg, bool on) {
     m_homeLat = latDeg; m_homeLon = lonDeg; m_hasHome = on;
 }
 
+void GlobeRenderer::setShowGrid(bool v) { m_showGrid = v; }
+
 void GlobeRenderer::buildSphere(int stacks, int slices) {
     QVector<float> verts; QVector<GLuint> idx;
     for (int i = 0; i <= stacks; ++i) {
@@ -225,6 +227,7 @@ void GlobeRenderer::render() {
     m_earthProg->setUniformValue("uHasNight", m_texNight ? 1.0f : 0.0f);
     m_earthProg->setUniformValue("uHasNormal", m_texNormal ? 1.0f : 0.0f);
     m_earthProg->setUniformValue("uHasSpecular", m_texSpecular ? 1.0f : 0.0f);
+    m_earthProg->setUniformValue("uShowGrid", m_showGrid ? 1.0f : 0.0f);
     if (m_texDay)     { m_texDay->bind(0);       m_earthProg->setUniformValue("uDay", 0); }
     if (m_texNight)   { m_texNight->bind(1);     m_earthProg->setUniformValue("uNight", 1); }
     if (m_texNormal)  { m_texNormal->bind(3);    m_earthProg->setUniformValue("uNormal", 3); }

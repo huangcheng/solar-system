@@ -19,6 +19,7 @@ public:
     void setCamera(const CameraController *c) { m_cam = c; }
     void setRotationSpeedRatio(int r) { m_rotRatio = (r < 1 ? 1 : r); } // 1 = true 24h
     void setHomeLocation(double latDeg, double lonDeg, bool on); // pulsing "you are here" beacon
+    void setShowGrid(bool v);
     void setQualityTier(int maxSize);
     void render();
 
@@ -40,6 +41,7 @@ private:
     int m_rotRatio = 2880;   // rotation x real-time (2880 -> ~1 turn / 30 s)
     double m_homeLat = 0.0, m_homeLon = 0.0;
     bool m_hasHome = false;
+    bool m_showGrid = false;
     int m_tierMaxSize = 8192;
     double m_centerLon = 0.0;
     bool m_useCenterLon = false;
