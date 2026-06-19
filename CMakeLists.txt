@@ -53,31 +53,6 @@ if(WIN32)
     target_link_libraries(celestial PUBLIC dwmapi user32)
 endif()
 
-# Legacy globe sources (AUTOMOC-enabled). Kept as a STATIC library so the
-# offscreen render tests (render_shot, test_sunview) can still link the old
-# GlobeWindow/GlobeRenderer/GlobeView stack while the shipped app uses the
-# celestial library directly. Slated for removal in the Phase 1 cleanup task.
-qt_add_library(globe_lib STATIC
-    src/globe/GlobeWindow.h
-    src/globe/GlobeWindow.cpp
-    src/globe/render/GlobeRenderer.h
-    src/globe/render/GlobeRenderer.cpp
-    src/globe/render/GlobeView.h
-    src/globe/render/GlobeView.cpp
-)
-
-target_include_directories(globe_lib PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/globe
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/globe/render
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/celestial
-)
-
-target_link_libraries(globe_lib PUBLIC
-    celestial
-    Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets
-)
-
 qt_add_executable(earth
     WIN32 MACOSX_BUNDLE
     src/apps/earth/main.cpp
