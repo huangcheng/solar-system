@@ -22,7 +22,6 @@ Earth fragment shader, is **off by default**, and is enabled manually through
 ## 3. Non-Goals
 
 - Degree labels or coordinate read-outs.
-- A tray menu toggle for the grid (this version is config-only).
 - Multiple grid densities or colors (fixed 15° spacing, warm amber).
 - Celestial / sky grid.
 
@@ -32,7 +31,7 @@ Earth fragment shader, is **off by default**, and is enabled manually through
 |---|---|
 | Visual style | Faint reference lines |
 | Default state | Off |
-| Toggle mechanism | `config.json` key only |
+| Toggle mechanism | `config.json` key **plus** a checkable tray menu item |
 | Spacing | 15° parallels and meridians |
 | Color | Warm amber (`#ffb347`) |
 | Labels | None |
@@ -66,7 +65,15 @@ The grid is computed from the existing per-fragment latitude and longitude.
 - Fade the grid near the limb to avoid hard edge artifacts.
 - When `uShowGrid < 0.5`, the entire grid branch is skipped.
 
-### 5.4 Application startup
+### 5.4 Tray menu
+
+- `SystemTray` exposes a `toggleShowGrid(bool)` signal and a checkable
+  **Show Grid** action.
+- `main.cpp` initializes the action's checked state from `config.showGrid()` and
+  connects the signal to update both `ConfigManager` and `GlobeRenderer`, then
+  saves the config.
+
+### 5.5 Application startup
 
 - `main.cpp` reads `config.showGrid()` after loading config and calls
   `renderer.setShowGrid(...)` before the first frame.
