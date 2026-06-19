@@ -2,7 +2,7 @@
 #include <QVector3D>
 #include <QtMath>
 #include <cmath>
-#include "GlobeRenderer.h"
+#include "celestial/CelestialBody.h"
 
 // Regression: the sun-centric base rotation must map the sub-solar point
 // (SunModel's sun direction) onto +Z for ANY (lat, lon), so the lit
@@ -30,7 +30,7 @@ private slots:
                             std::cos(lr) * std::sin(nr),
                             std::sin(lr));
 
-        const QMatrix4x4 m = GlobeRenderer::sunCentricBaseRotation(lat, lon);
+        const QMatrix4x4 m = CelestialBody::sunCentricBaseRotation(lat, lon);
         const QVector3D mapped = m.map(sun);
 
         QVERIFY2(std::abs(mapped.x()) <= 1e-3f, qPrintable(QString("x=%1").arg(mapped.x())));

@@ -1,5 +1,5 @@
 #include <QtTest/QtTest>
-#include "BodyConfig.h"
+#include "celestial/BodyConfig.h"
 
 class TestBodyConfig : public QObject {
     Q_OBJECT

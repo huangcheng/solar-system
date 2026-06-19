@@ -1,5 +1,5 @@
 #include <QtTest>
-#include "ConfigManager.h"
+#include "celestial/ConfigManager.h"
 #include <QTemporaryDir>
 
 class TestConfigManager : public QObject { Q_OBJECT

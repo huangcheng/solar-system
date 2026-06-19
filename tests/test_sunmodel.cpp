@@ -2,7 +2,7 @@
 #include <QDateTime>
 #include <QTimeZone>
 #include <QVector3D>
-#include "SunModel.h"
+#include "celestial/SunModel.h"
 
 class TestSunModel : public QObject { Q_OBJECT
 private slots:

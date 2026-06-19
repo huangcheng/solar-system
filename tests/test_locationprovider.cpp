@@ -1,5 +1,5 @@
 #include <QtTest>
-#include "LocationProvider.h"
+#include "celestial/LocationProvider.h"
 
 class TestLocationProvider : public QObject { Q_OBJECT
 private slots:

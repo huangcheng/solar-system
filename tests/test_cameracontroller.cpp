@@ -1,5 +1,5 @@
 #include <QtTest>
-#include "CameraController.h"
+#include "celestial/CameraController.h"
 
 class TestCameraController : public QObject { Q_OBJECT
 private slots:
