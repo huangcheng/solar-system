@@ -106,16 +106,17 @@ void main() {
         float dd = acos(clamp(dot(nObj, normalize(uHomeDir)), -1.0, 1.0)); // angular dist (rad)
         float pulse = 0.5 + 0.5 * sin(uTime * 2.5);
 
-        vec3 beacon = vec3(0.35, 0.85, 1.0);                       // soft cyan
+        vec3 warmOuter = vec3(1.0, 0.50, 0.10);   // deep orange (halo)
+        vec3 warmInner = vec3(1.0, 0.82, 0.30);   // warm yellow (ring)
 
         // smooth additive halo (exponential falloff -> no hard edges)
         float glowR = 0.045 + 0.015 * pulse;
         float glow  = exp(-3.0 * (dd / glowR) * (dd / glowR));
-        color += beacon * glow * (0.30 + 0.30 * pulse);
+        color += warmOuter * glow * (0.40 + 0.30 * pulse);
 
         // thin crisp accent ring for definition
         float ring = exp(-((dd - 0.022) / 0.004) * ((dd - 0.022) / 0.004)) * 0.55;
-        color += beacon * ring;
+        color += warmInner * ring;
 
         // bright white-hot pinpoint core
         float core = smoothstep(0.010, 0.004, dd);
