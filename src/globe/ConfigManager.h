@@ -16,7 +16,8 @@ public:
     QualityTier qualityTier() const; void setQualityTier(QualityTier t);
     int fpsCap() const;         void setFpsCap(int v);
     double cloudSpeed() const;  void setCloudSpeed(double v);
-    int rotationSpeed() const;  void setRotationSpeed(int v); // ratio over real-time (1 = true 24h)    bool locationOptIn() const; void setLocationOptIn(bool v);
+    int rotationSpeed() const;  void setRotationSpeed(int v); // ratio over real-time (1 = true 24h)
+    bool locationOptIn() const; void setLocationOptIn(bool v);
     double homeLongitude() const; void setHomeLongitude(double v);
 
     void load();
