@@ -39,7 +39,7 @@ private:
     AssetManager *m_assets = nullptr;
     const SunModel *m_sun = nullptr;
     const CameraController *m_cam = nullptr;
-    int m_rotRatio = 1;      // 1 = static (real-time); >1 adds an optional visible spin
+    int m_rotRatio = 2880;  // rotation x real-time (2880 -> ~1 turn / 30 s)
     double m_homeLat = 0.0, m_homeLon = 0.0;
     bool m_hasHome = false;
     bool m_showGrid = false;

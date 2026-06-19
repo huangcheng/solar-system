@@ -30,12 +30,12 @@ public:
 private:
     QString m_path;
     int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
-    int m_rotationSpeed = 1;     // 1 = static (real-time day/night); >1 adds a visible spin
+    int m_rotationSpeed = 2880;  // rotation x real-time (2880 -> ~1 turn / 30 s)
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
     bool m_showGrid = false;
-    QString m_nightMode = QStringLiteral("simple");
+    QString m_nightMode = QStringLiteral("texture");
     QString m_language  = QStringLiteral("en");
     double m_homeLat = 0.0, m_homeLon = 0.0;
     static int clampDiameter(int v);

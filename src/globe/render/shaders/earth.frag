@@ -92,9 +92,10 @@ void main() {
     day *= relief;
 
     // Faint earthshine/airglow so the night side isn't pure black. The dim day
-    // map (day * 0.05) keeps faint continent outlines on the night side in both
-    // modes; Realistic Night additionally adds the city-lights texture.
-    vec3 darkSide = night * 0.8 + day * 0.05 + vec3(0.012, 0.018, 0.035);
+    // map (day * 0.35) keeps continent outlines clearly visible on the night
+    // side in both modes; Realistic Night additionally adds the city-lights
+    // texture so populated land reads bright.
+    vec3 darkSide = night * 0.8 + day * 0.35 + vec3(0.03, 0.035, 0.05);
     vec3 color = mix(darkSide, day, dayFactor);
 
     // Warm dusk that hugs the terminator, faded at the grazing limb and over dark
