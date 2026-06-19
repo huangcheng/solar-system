@@ -31,7 +31,7 @@ public:
 private:
     QString m_path;
     int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
-    int m_rotationSpeed = 1;     // 1 = real-time (correct day/night); >1 = time-lapse spin
+    int m_rotationSpeed = 120;   // 1 = real-time (exact day/night); 120 = visible spin, day/night ~correct for minutes
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
