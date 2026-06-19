@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     LocationProvider location;
     if (config.locationOptIn()) location.start();
     w.view()->renderer().setHomeLocation(config.homeLatitude(), config.homeLongitude(), true);
+    w.view()->renderer().setShowGrid(config.showGrid());
     QObject::connect(&location, &LocationProvider::locationChanged, &w,
         [&w](double lat, double lon) { w.view()->renderer().setHomeLocation(lat, lon, true); });
 
