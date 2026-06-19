@@ -26,12 +26,8 @@ target_include_directories(celestial PUBLIC
 )
 
 target_link_libraries(celestial PUBLIC
-    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
+    Qt::Core Qt::Gui
 )
-
-if(WIN32)
-    target_link_libraries(celestial PUBLIC dwmapi user32)
-endif()
 
 # Core library: holds all globe sources (AUTOMOC-enabled) so both the app and
 # the tests can link the same code. (An executable target cannot be linked into
@@ -66,7 +62,14 @@ target_include_directories(globe_lib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/celestial
 )
 
-target_link_libraries(globe_lib PUBLIC celestial)
+target_link_libraries(globe_lib PUBLIC
+    celestial
+    Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
+)
+
+if(WIN32)
+    target_link_libraries(globe_lib PUBLIC dwmapi user32)
+endif()
 
 qt_add_executable(globe
     WIN32 MACOSX_BUNDLE

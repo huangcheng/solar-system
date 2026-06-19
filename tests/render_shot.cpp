@@ -18,9 +18,9 @@
 #include <cmath>
 
 #include "render/GlobeRenderer.h"
-#include "render/AssetManager.h"
-#include "render/SunModel.h"
-#include "render/CameraController.h"
+#include "celestial/AssetManager.h"
+#include "celestial/SunModel.h"
+#include "celestial/CameraController.h"
 
 int main(int argc, char **argv) {
     QGuiApplication app(argc, argv);

@@ -5,9 +5,9 @@
 #include <QMatrix4x4>
 #include <QVector3D>
 #include <memory>
-#include "AssetManager.h"
-#include "SunModel.h"
-#include "CameraController.h"
+#include "celestial/AssetManager.h"
+#include "celestial/SunModel.h"
+#include "celestial/CameraController.h"
 
 class GlobeRenderer {
 public:

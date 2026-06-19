@@ -3,8 +3,6 @@
 #include <QString>
 #include <QStringList>
 
-class ConfigManager;
-
 // Loads day/night/cloud textures from disk (never from the Qt resource system
 // — HD images stay as loose files to keep the binary small). It searches a list
 // of candidate directories in order and uses the first file it finds; missing

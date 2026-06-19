@@ -3,9 +3,9 @@
 #include "globe/SystemTray.h"
 #include "globe/SettingsDialog.h"
 #include "globe/FullscreenWatcher.h"
-#include "render/SunModel.h"
-#include "render/CameraController.h"
-#include "render/AssetManager.h"
+#include "celestial/SunModel.h"
+#include "celestial/CameraController.h"
+#include "celestial/AssetManager.h"
 #include "render/TimeController.h"
 #include "globe/LocationProvider.h"
 #include <QApplication>
