@@ -20,6 +20,7 @@ public:
     bool locationOptIn() const; void setLocationOptIn(bool v);
     double homeLatitude() const;  void setHomeLatitude(double v);
     double homeLongitude() const; void setHomeLongitude(double v);
+    bool showGrid() const;        void setShowGrid(bool v);
 
     void load();
     void save();
@@ -31,6 +32,7 @@ private:
     QualityTier m_tier = HD;
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
+    bool m_showGrid = false;
     double m_homeLat = 0.0, m_homeLon = 0.0;
     static int clampDiameter(int v);
 };

@@ -33,6 +33,8 @@ double ConfigManager::homeLongitude() const { return m_homeLon; }
 void ConfigManager::setHomeLongitude(double v) { m_homeLon = v; }
 double ConfigManager::homeLatitude() const { return m_homeLat; }
 void ConfigManager::setHomeLatitude(double v) { m_homeLat = v; }
+bool ConfigManager::showGrid() const { return m_showGrid; }
+void ConfigManager::setShowGrid(bool v) { m_showGrid = v; }
 
 void ConfigManager::load() {
     QFile f(m_path);
@@ -48,6 +50,7 @@ void ConfigManager::load() {
     m_locationOptIn = obj.value("locationOptIn").toBool(m_locationOptIn);
     m_homeLat = obj.value("homeLatitude").toDouble(m_homeLat);
     m_homeLon = obj.value("homeLongitude").toDouble(m_homeLon);
+    m_showGrid = obj.value("showGrid").toBool(m_showGrid);
 }
 
 void ConfigManager::save() {
@@ -58,6 +61,7 @@ void ConfigManager::save() {
     o["rotationSpeed"] = m_rotationSpeed;
     o["homeLatitude"] = m_homeLat;
     o["homeLongitude"] = m_homeLon;
+    o["showGrid"] = m_showGrid;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))
         f.write(QJsonDocument(o).toJson(QJsonDocument::Indented));

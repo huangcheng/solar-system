@@ -10,6 +10,7 @@ private slots:
         c.setWindowX(123); c.setWindowY(456);
         c.setDiameter(420); c.setQualityTier(ConfigManager::HD);
         c.setFpsCap(30); c.setLocationOptIn(true); c.setHomeLongitude(116.4);
+        c.setShowGrid(true);
         c.save();
 
         ConfigManager c2(dir.path());
@@ -20,6 +21,7 @@ private slots:
         QCOMPARE(c2.fpsCap(), 30);
         QVERIFY(c2.locationOptIn());
         QCOMPARE(c2.homeLongitude(), 116.4);
+        QVERIFY(c2.showGrid());
     }
     void clampsDiameter() {
         QTemporaryDir dir;
