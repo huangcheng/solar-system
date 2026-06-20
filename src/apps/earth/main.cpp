@@ -70,8 +70,8 @@ int main(int argc, char *argv[]) {
     widget.resize(config.diameter(), config.diameter());
 
     LocationProvider location;
-    if (config.locationOptIn()) location.start();
     widget.applyOptionsFromConfig();  // sets home location, grid, night mode, rotation speed
+    if (config.autoDetectOnStart()) location.requestOnceSystem();   // startup auto-detect (one-shot)
 
     QObject::connect(&location, &LocationProvider::locationChanged, &widget,
         [&widget, &config](double lat, double lon) {
@@ -93,18 +93,15 @@ int main(int argc, char *argv[]) {
     QObject::connect(&widget, &CelestialWidget::userInteracted, &time, [&time] { time.boost(); });
 
     SystemTray tray;
-    SettingsDialog settingsDialog(&config, &widget);
+    SettingsDialog settingsDialog(&config, &widget, &location);
     QObject::connect(&tray, &SystemTray::toggleVisibility, &widget,
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });
     QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &widget,
-        [&widget, &config, &translator, &app, &time, &tray, &location]() {
+        [&widget, &config, &translator, &app, &time, &tray]() {
             // applyOptionsFromConfig() toggles Qt::WindowStaysOnTopHint; changing
             // window flags hides a visible widget, so capture and re-show it.
             const bool wasVisible = widget.isVisible();
             widget.applyOptionsFromConfig();
-            // Start/stop Qt Positioning per the live opt-in so a real OS fix can
-            // populate the marker coordinates when geolocation is available.
-            if (config.locationOptIn()) location.start(); else location.stop();
             widget.setViewMode(config.viewMode() == QStringLiteral("map")
                                ? CelestialWidget::ViewMode::FlatMap
                                : CelestialWidget::ViewMode::Globe);
