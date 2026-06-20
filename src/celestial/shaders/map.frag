@@ -44,7 +44,11 @@ void main() {
 
     vec3 day   = (uHasDay   > 0.5) ? texture(uDay,   uv).rgb : vec3(0.15, 0.35, 0.70);
     vec3 night = (uHasNight > 0.5 && uUseNightTexture > 0.5) ? texture(uNight, uv).rgb : vec3(0.0);
-    vec3 darkSide = night * 0.8 + day * 0.35 + vec3(0.03, 0.035, 0.05);
+    // Match earth.frag: gamma + gain lifts dim city lights so the night side
+    // reads densely populated; faint earthshine keeps just enough continent
+    // outline without washing the lights out.
+    vec3 nightLit = pow(night, vec3(0.8)) * 1.35;
+    vec3 darkSide = nightLit + day * 0.14 + vec3(0.012, 0.014, 0.022);
     vec3 color = mix(darkSide, day, dayFactor);
     // NOTE: no brown dusk tint here (deliberately clean day/night transition).
 

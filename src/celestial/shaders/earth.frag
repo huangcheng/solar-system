@@ -89,8 +89,12 @@ void main() {
     float dayFactor = smoothstep(-0.10, 0.20, cosGeo);
 
     vec3 day   = (uHasDay   > 0.5) ? textureLod(uDay,   uv, lod).rgb : vec3(0.15, 0.35, 0.70);
+    // City lights are sub-pixel high-frequency detail: loadTextures ships the
+    // night map at full resolution and we sample it at a CAPPED LOD here so the
+    // lights survive instead of being mip-averaged to black by the day map's
+    // coarse LOD (which is tuned for the smooth day surface, not point lights).
     vec3 night = (uHasNight > 0.5 && uUseNightTexture > 0.5)
-                     ? textureLod(uNight, uv, lod).rgb : vec3(0.0);
+                     ? textureLod(uNight, uv, min(lod, 3.0)).rgb : vec3(0.0);
 
     // Relief shading: how much the bumped slope faces the sun vs the flat sphere.
     // Centered on 1.0 so flat ground is unchanged; the effect is strongest near
@@ -98,11 +102,14 @@ void main() {
     float relief = clamp((dot(N, sun) - cosGeo) * kReliefShade + 1.0, 0.40, 1.60);
     day *= relief;
 
-    // Faint earthshine/airglow so the night side isn't pure black. The dim day
-    // map (day * 0.35) keeps continent outlines clearly visible on the night
-    // side in both modes; Realistic Night additionally adds the city-lights
-    // texture so populated land reads bright.
-    vec3 darkSide = night * 0.8 + day * 0.35 + vec3(0.03, 0.035, 0.05);
+    // City lights are sub-pixel high-frequency detail: ship the night map at
+    // full resolution (loadTextures) and sample it at a capped LOD (above) so
+    // the lights survive instead of being mip-averaged to black. A mild gamma +
+    // gain lifts dim lights so the night side reads densely populated, and the
+    // earthshine is kept faint so lights contrast like the source Black-Marble
+    // map instead of washing out against a 35%-bright day base.
+    vec3 nightLit = pow(night, vec3(0.8)) * 1.35;
+    vec3 darkSide = nightLit + day * 0.14 + vec3(0.012, 0.014, 0.022);
     vec3 color = mix(darkSide, day, dayFactor);
 
     // Warm dusk that hugs the terminator, faded at the grazing limb and over dark

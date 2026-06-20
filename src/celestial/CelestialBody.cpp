@@ -118,7 +118,10 @@ void CelestialBody::buildQuad() {
 }
 
 void CelestialBody::loadTextures() {
-    // Cap at 4K: the widget is small, and 8K would just add memory + shimmer.
+    // Day / normal / specular capped at 4K: the widget is small and 8K would
+    // only add memory + shimmer. The NIGHT map is kept at the full quality tier
+    // (8K on HD): city lights are sub-pixel high-frequency detail, and
+    // downsampling them is what made the night side read as "a few lights".
     const int cap = qMin(m_tierMaxSize, 4096);
     auto make = [](const QImage &img) {
         auto t = std::make_unique<QOpenGLTexture>(img.flipped(Qt::Vertical));
@@ -133,7 +136,7 @@ void CelestialBody::loadTextures() {
         return t;
     };
     m_texDay      = make(m_assets->image(AssetManager::Day, cap));
-    m_texNight    = make(m_assets->image(AssetManager::Night, cap));
+    m_texNight    = make(m_assets->image(AssetManager::Night, m_tierMaxSize));
     // Cloud layer disabled: at full opacity it hid the terrain. The earth should
     // read as bare land/mountains/sea. (clouds.* shaders are kept and the draw
     // pass self-skips when m_texClouds is null, so it's a one-line re-enable.)
