@@ -38,6 +38,8 @@ qt_add_library(celestial STATIC
     src/celestial/CelestialBody.cpp
     src/celestial/CelestialWidget.h
     src/celestial/CelestialWidget.cpp
+    src/celestial/BodyApp.h
+    src/celestial/BodyApp.cpp
 )
 
 target_include_directories(celestial PUBLIC
@@ -58,6 +60,18 @@ qt_add_executable(earth
     src/apps/earth/main.cpp
 )
 target_link_libraries(earth PRIVATE celestial)
+
+# Phase 2: standalone widgets for Sun, Moon, and the planets. Each body's
+# main.cpp is a thin shim over bodyapp::runBodyApp(); earth is intentionally
+# excluded (its main.cpp has Earth-specific geolocation + sun-sub-point tooltip).
+set(PHASE2_BODIES sun moon mercury venus mars jupiter saturn uranus neptune)
+foreach(body ${PHASE2_BODIES})
+    qt_add_executable(${body}
+        WIN32 MACOSX_BUNDLE
+        src/apps/${body}/main.cpp
+    )
+    target_link_libraries(${body} PRIVATE celestial)
+endforeach()
 
 qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
 
