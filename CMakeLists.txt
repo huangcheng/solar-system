@@ -1,5 +1,17 @@
 cmake_minimum_required(VERSION 3.19)
-project(globe LANGUAGES CXX)
+project(globe VERSION 1.0.0 LANGUAGES CXX)
+
+# Version metadata injected into the app for the About dialog.
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE GLOBE_GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT GLOBE_GIT_HASH)
+    set(GLOBE_GIT_HASH "unknown")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,6 +24,8 @@ qt_standard_project_setup()
 # every body widget (earth, sun, mars, ...). Kept as a separate STATIC library
 # so each app links only what it needs while reusing the same code.
 qt_add_library(celestial STATIC
+    src/celestial/AboutDialog.h
+    src/celestial/AboutDialog.cpp
     src/celestial/AssetManager.h
     src/celestial/AssetManager.cpp
     src/celestial/CameraController.h
@@ -59,6 +73,11 @@ set_target_properties(celestial PROPERTIES AUTORCC ON)
 
 target_link_libraries(celestial PUBLIC
     Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning Qt::Network
+)
+
+target_compile_definitions(celestial PRIVATE
+    GLOBE_VERSION="${PROJECT_VERSION}"
+    GLOBE_GIT_HASH="${GLOBE_GIT_HASH}"
 )
 
 if(WIN32)

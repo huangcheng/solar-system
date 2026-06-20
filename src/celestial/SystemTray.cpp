@@ -26,9 +26,7 @@ void SystemTray::buildMenu() {
     m_menu->addSeparator();
     m_menu->addAction(tr("Settings..."), this, &SystemTray::openSettings);
     m_menu->addSeparator();
-    m_menu->addAction(tr("About"), this, [] {
-        // v1: About is a tray message. A real dialog can replace this later.
-    });
+    m_menu->addAction(tr("About"), this, &SystemTray::openAbout);
     auto *quit = m_menu->addAction(tr("Quit"));
     connect(quit, &QAction::triggered, qApp, &QApplication::quit);
 }

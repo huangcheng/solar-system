@@ -9,6 +9,7 @@
 #include "TimeController.h"
 #include "LocationProvider.h"
 #include "BodyConfig.h"
+#include "AboutDialog.h"
 #include <QApplication>
 #include <QCoreApplication>
 #include <QTimer>
@@ -95,6 +96,9 @@ int main(int argc, char *argv[]) {
 
     SystemTray tray;
     SettingsDialog settingsDialog(&config, &widget, &location);
+    AboutDialog aboutDialog(&widget);
+    QObject::connect(&tray, &SystemTray::openAbout, &widget,
+        [&aboutDialog]() { aboutDialog.exec(); });
     QObject::connect(&tray, &SystemTray::toggleVisibility, &widget,
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });
     QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &widget,

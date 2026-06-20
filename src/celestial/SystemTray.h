@@ -15,6 +15,7 @@ signals:
     void resetView();
     void centerOnMe();
     void openSettings();
+    void openAbout();
     void quit();
 private:
     void buildMenu();
