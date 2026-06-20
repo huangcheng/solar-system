@@ -1,4 +1,5 @@
 #include "SystemTray.h"
+#include <QSignalBlocker>
 #include <QMenu>
 #include <QAction>
 #include <QApplication>
@@ -13,6 +14,9 @@ SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
     menu->addAction(tr("Hide/Show"), this, &SystemTray::toggleVisibility);
     menu->addAction(tr("Reset View"), this, &SystemTray::resetView);
     menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
+    m_flatMapAction = menu->addAction(tr("Flat Map"));
+    m_flatMapAction->setCheckable(true);
+    connect(m_flatMapAction, &QAction::toggled, this, &SystemTray::flatMapToggled);
     menu->addSeparator();
     menu->addAction(tr("Settings..."), this, &SystemTray::openSettings);
     menu->addSeparator();
@@ -28,5 +32,12 @@ SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
 
 void SystemTray::setSolarTooltip(const QString &text) {
     setToolTip(text);
+}
+
+void SystemTray::setFlatMapChecked(bool checked) {
+    if (m_flatMapAction) {
+        QSignalBlocker b(m_flatMapAction);
+        m_flatMapAction->setChecked(checked);
+    }
 }
 
