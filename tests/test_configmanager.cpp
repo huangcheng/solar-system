@@ -35,7 +35,28 @@ private slots:
         c.setDiameter(100000);
         QCOMPARE(c.diameter(), 1024);
     }
+    void testViewModeRoundTrip();
 };
+
+void TestConfigManager::testViewModeRoundTrip() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ConfigManager cm(dir.path());
+    QCOMPARE(cm.viewMode(), QStringLiteral("globe"));   // default
+
+    cm.setViewMode(QStringLiteral("map"));
+    QCOMPARE(cm.viewMode(), QStringLiteral("map"));
+    cm.save();
+
+    ConfigManager cm2(dir.path());
+    QCOMPARE(cm2.viewMode(), QStringLiteral("map"));    // persisted
+
+    cm2.setViewMode(QStringLiteral("globe"));
+    QCOMPARE(cm2.viewMode(), QStringLiteral("globe"));
+    // invalid value clamps to globe
+    cm2.setViewMode(QStringLiteral("nonsense"));
+    QCOMPARE(cm2.viewMode(), QStringLiteral("globe"));
+}
 
 QTEST_GUILESS_MAIN(TestConfigManager)
 #include "test_configmanager.moc"

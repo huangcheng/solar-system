@@ -24,6 +24,7 @@ public:
     QString nightMode() const;    void setNightMode(const QString &v);
     QString language() const;     void setLanguage(const QString &v);
     bool alwaysOnTop() const;     void setAlwaysOnTop(bool v);
+    QString viewMode() const;     void setViewMode(const QString &v);
 
     void load();
     void save();
@@ -39,6 +40,7 @@ private:
     bool m_alwaysOnTop = true;
     QString m_nightMode = QStringLiteral("texture");
     QString m_language  = QStringLiteral("en");
+    QString m_viewMode  = QStringLiteral("globe");  // "globe" (3D) or "map" (flat equirectangular)
     double m_homeLat = 0.0, m_homeLon = 0.0;
     static int clampDiameter(int v);
 };
