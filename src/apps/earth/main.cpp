@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     // config directories will be introduced in Phase 2.
     app.setApplicationName("Globe");
 
-    ConfigManager config;
+    ConfigManager config(QStringLiteral("earth"));  // explicit bodyId; preserves legacy config.json path
 
     QTranslator translator;
     if (config.language() == QStringLiteral("zh_CN")) {

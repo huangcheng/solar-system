@@ -6,7 +6,7 @@ class TestConfigManager : public QObject { Q_OBJECT
 private slots:
     void savesAndLoadsValues() {
         QTemporaryDir dir;
-        ConfigManager c(dir.path());
+        ConfigManager c(dir.path(), true);
         c.setWindowX(123); c.setWindowY(456);
         c.setDiameter(420); c.setQualityTier(ConfigManager::HD);
         c.setFpsCap(30); c.setLocationOptIn(true); c.setHomeLongitude(116.4);
@@ -15,7 +15,7 @@ private slots:
         c.setLanguage(QStringLiteral("zh_CN"));
         c.save();
 
-        ConfigManager c2(dir.path());
+        ConfigManager c2(dir.path(), true);
         QCOMPARE(c2.windowX(), 123);
         QCOMPARE(c2.windowY(), 456);
         QCOMPARE(c2.diameter(), 420);
@@ -29,11 +29,20 @@ private slots:
     }
     void clampsDiameter() {
         QTemporaryDir dir;
-        ConfigManager c(dir.path());
+        ConfigManager c(dir.path(), true);
         c.setDiameter(10);
         QCOMPARE(c.diameter(), 160);
         c.setDiameter(100000);
         QCOMPARE(c.diameter(), 1024);
+    }
+    void testPathForBodyIsolatesBodies() {
+        // Earth keeps the legacy top-level config.json (Phase 1 compat);
+        // other bodies each get their own subdir so they cannot clobber it.
+        QVERIFY(ConfigManager::pathForBody("earth").endsWith("/config.json"));
+        QVERIFY(!ConfigManager::pathForBody("earth").contains("/earth/"));
+        QVERIFY(ConfigManager::pathForBody("mars").endsWith("/mars/config.json"));
+        QVERIFY(ConfigManager::pathForBody("sun").endsWith("/sun/config.json"));
+        QVERIFY(ConfigManager::pathForBody("earth") != ConfigManager::pathForBody("mars"));
     }
 };
 

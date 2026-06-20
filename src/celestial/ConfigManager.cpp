@@ -3,13 +3,28 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
+#include <QDir>
+#include <QFileInfo>
 
 int ConfigManager::clampDiameter(int v) { return v < 160 ? 160 : (v > 1024 ? 1024 : v); }
 
-ConfigManager::ConfigManager(QString dir, QObject *parent) : QObject(parent) {
-    if (dir.isEmpty())
-        dir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    m_path = dir + "/config.json";
+QString ConfigManager::pathForBody(const QString& bodyId) {
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    // Phase 1 compat: earth keeps the legacy top-level config.json so the user's
+    // existing settings survive. Other bodies get a per-body subdir.
+    return (bodyId == QStringLiteral("earth")) ? (base + "/config.json")
+                                               : (base + "/" + bodyId + "/config.json");
+}
+
+ConfigManager::ConfigManager(const QString& bodyId, QObject *parent) : QObject(parent) {
+    m_path = pathForBody(bodyId);
+    // Ensure the parent dir exists (load() won't create it, but save() writes into it).
+    QDir().mkpath(QFileInfo(m_path).absolutePath());
+    load();
+}
+
+ConfigManager::ConfigManager(const QString& dir, bool /*testing*/, QObject *parent)
+    : QObject(parent), m_path(dir + "/config.json") {
     load();
 }
 
