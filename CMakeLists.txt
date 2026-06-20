@@ -138,6 +138,11 @@ install(SCRIPT ${deploy_script})
 # applicationDirPath()/textures, ../textures, and the user-local cache.
 install(DIRECTORY textures/ DESTINATION textures)
 
+# Ship the GLSL shaders next to the binary. CelestialBody::loadShaderSource()
+# reads applicationDirPath()/shaders; without these the programs fail to link
+# and the globe renders solid black.
+install(DIRECTORY src/celestial/shaders/ DESTINATION ${CMAKE_INSTALL_BINDIR}/shaders)
+
 # Tests
 enable_testing()
 add_subdirectory(tests)
