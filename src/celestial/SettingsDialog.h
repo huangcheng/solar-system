@@ -9,7 +9,7 @@ class QRadioButton;
 class QComboBox;
 class QCompleter;
 class QPushButton;
-class QMenu;
+class QDoubleSpinBox;
 class QGroupBox;
 class QSlider;
 class QLabel;
@@ -18,8 +18,8 @@ class SettingsDialog : public QDialog {
     Q_OBJECT
 public:
     // `location` defaults to nullptr so the dialog can be constructed without a
-    // live system provider (the System detect action then no-ops); main.cpp
-    // passes the real LocationProvider so System detection works.
+    // live system provider; main.cpp passes the real LocationProvider so the
+    // startup auto-detect (handled in main.cpp) feeds coordinates back here.
     explicit SettingsDialog(ConfigManager *config, QWidget *parent = nullptr,
                             LocationProvider *location = nullptr);
 
@@ -33,6 +33,7 @@ private slots:
     void accept() override;
     void onRotationSlider(int value);
     void onLocationFound(double lat, double lon, const QString &city);
+    void onCoordsEdited();
 
 private:
     ConfigManager *m_config = nullptr;
@@ -49,17 +50,23 @@ private:
     QComboBox *m_viewModeCombo = nullptr;
     QComboBox *m_cityCombo = nullptr;
     QCompleter *m_cityCompleter = nullptr;
-    QPushButton *m_detectBtn = nullptr;
-    QMenu *m_detectMenu = nullptr;
+    QComboBox *m_detectCombo = nullptr;
+    QPushButton *m_fetchBtn = nullptr;
+    QDoubleSpinBox *m_latSpin = nullptr;
+    QDoubleSpinBox *m_lonSpin = nullptr;
     QSlider *m_rotationSlider = nullptr;
     QLabel *m_rotationValueLabel = nullptr;
     QLabel *m_langLabel = nullptr;
     QLabel *m_viewModeLabel = nullptr;
     QLabel *m_homeCityLabel = nullptr;
-    QLabel *m_coordLabel = nullptr;
+    QLabel *m_latLabel = nullptr;
+    QLabel *m_lonLabel = nullptr;
+    QLabel *m_statusLabel = nullptr;
     QLabel *m_spinLabel = nullptr;
+    QGroupBox *m_homeGroup = nullptr;
     QGroupBox *m_nightGroup = nullptr;
 
     void setupUi();
-    void refreshCoordLabel();
+    // Push lat/lon into the spinboxes + config (+marker) + persist + notify.
+    void commitLocation(double lat, double lon);
 };

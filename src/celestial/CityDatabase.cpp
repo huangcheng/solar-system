@@ -4,6 +4,11 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <cmath>
+
+namespace {
+constexpr double PI = 3.14159265358979323846;
+}
 
 QList<CityEntry> CityDatabase::parse(const QJsonArray &arr) {
     QList<CityEntry> out;
@@ -43,4 +48,32 @@ std::optional<CityEntry> CityDatabase::findByDisplay(const QString &display) con
         if (e.display() == display)
             return e;
     return std::nullopt;
+}
+
+std::optional<CityEntry> CityDatabase::findNearest(double lat, double lon) const {
+    if (m_cities.isEmpty())
+        return std::nullopt;
+    const auto haversine = [](double aLat, double aLon, double bLat, double bLon) {
+        const double D2R = PI / 180.0;
+        const double dLat = (bLat - aLat) * D2R;
+        const double dLon = (bLon - aLon) * D2R;
+        const double sLat = std::sin(dLat / 2.0);
+        const double sLon = std::sin(dLon / 2.0);
+        double a = sLat * sLat +
+                   std::cos(aLat * D2R) * std::cos(bLat * D2R) * sLon * sLon;
+        if (a > 1.0) a = 1.0;
+        if (a < 0.0) a = 0.0;
+        return 2.0 * std::asin(std::sqrt(a));
+    };
+
+    const CityEntry *best = &m_cities.first();
+    double bestDist = haversine(lat, lon, best->lat, best->lon);
+    for (const CityEntry &e : m_cities) {
+        const double d = haversine(lat, lon, e.lat, e.lon);
+        if (d < bestDist) {
+            bestDist = d;
+            best = &e;
+        }
+    }
+    return *best;
 }

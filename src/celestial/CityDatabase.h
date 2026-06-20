@@ -16,6 +16,7 @@ public:
     static CityDatabase &instance();   // loads :/data/cities.json once (lazy)
     const QList<CityEntry> &all() const { return m_cities; }
     std::optional<CityEntry> findByDisplay(const QString &display) const;  // "City, Country"
+    std::optional<CityEntry> findNearest(double lat, double lon) const;    // closest city by Haversine
     // Pure parse helper (testable without the resource):
     static QList<CityEntry> parse(const class QJsonArray &arr);
 private:
