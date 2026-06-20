@@ -55,6 +55,13 @@ vec2 sphereToUV(vec3 n) {
 void main() {
     vec3 nObj = normalize(vLocal);
     vec2 uv   = sphereToUV(nObj);
+    // Continuous mipmap LOD derived from the object-space normal's screen
+    // derivatives. nObj (vLocal) is continuous across the date line and
+    // rotation-invariant, so this LOD is seam-free AND flicker-free during spin
+    // — unlike the auto-LOD the GPU derives from the discontinuous atan-based uv.x
+    // (which explodes at the longitude wrap and forced the old 1x1-mip dark seam).
+    float angPx = max(length(dFdx(nObj)), length(dFdy(nObj)));
+    float lod   = log2(angPx * float(textureSize(uDay, 0).x) / 6.2831853 + 1e-7);
     vec3 nGeo = normalize(vWorld);          // geometric world normal
     vec3 sun  = normalize(uSunWorld);
     mat3 M3   = mat3(uModel);
@@ -72,7 +79,7 @@ void main() {
         vec3 Bobj = cross(nObj, Tobj);
         vec3 Tw = normalize(M3 * Tobj);
         vec3 Bw = normalize(M3 * Bobj);
-        vec3 nm = texture(uNormal, uv).xyz * 2.0 - 1.0;
+        vec3 nm = textureLod(uNormal, uv, lod).xyz * 2.0 - 1.0;
         nm.xy *= kReliefStrength;
         N = normalize(mat3(Tw, Bw, nGeo) * nm);
     }
@@ -81,9 +88,9 @@ void main() {
     // Soft terminator from the GEOMETRIC normal so relief never makes it jagged.
     float dayFactor = smoothstep(-0.10, 0.20, cosGeo);
 
-    vec3 day   = (uHasDay   > 0.5) ? texture(uDay,   uv).rgb : vec3(0.15, 0.35, 0.70);
+    vec3 day   = (uHasDay   > 0.5) ? textureLod(uDay,   uv, lod).rgb : vec3(0.15, 0.35, 0.70);
     vec3 night = (uHasNight > 0.5 && uUseNightTexture > 0.5)
-                     ? texture(uNight, uv).rgb : vec3(0.0);
+                     ? textureLod(uNight, uv, lod).rgb : vec3(0.0);
 
     // Relief shading: how much the bumped slope faces the sun vs the flat sphere.
     // Centered on 1.0 so flat ground is unchanged; the effect is strongest near
@@ -108,7 +115,7 @@ void main() {
 
     // Ocean sun-glint: subtle, water-masked, day-side only — no glassy sheen.
     if (uHasSpecular > 0.5) {
-        float water = texture(uSpecular, uv).r;
+        float water = textureLod(uSpecular, uv, lod).r;
         vec3 viewDir = normalize(uViewPos - vWorld);
         vec3 H = normalize(sun + viewDir);
         float spec = pow(max(dot(N, H), 0.0), 70.0);

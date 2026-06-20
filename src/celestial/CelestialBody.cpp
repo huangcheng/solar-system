@@ -93,18 +93,18 @@ void CelestialBody::buildSphere(int stacks, int slices) {
 }
 
 void CelestialBody::loadTextures() {
-    // Cap at 4K: the widget is small, and linear (no-mipmap) filtering on an
-    // 8K texture would shimmer. 4K is plenty sharp for <= ~1000 px on screen.
+    // Cap at 4K: the widget is small, and 8K would just add memory + shimmer.
     const int cap = qMin(m_tierMaxSize, 4096);
     auto make = [](const QImage &img) {
         auto t = std::make_unique<QOpenGLTexture>(img.flipped(Qt::Vertical));
-        // Linear filtering, NO mipmaps. Mipmapping produces a dark vertical
-        // seam at the longitude wrap (the UV derivative explodes across the
-        // date line, forcing a 1x1 mip there). The equirectangular maps are
-        // seamless, so linear filtering renders the wrap cleanly.
-        t->setMinificationFilter(QOpenGLTexture::Linear);
+        // Mipmaps ON (LinearMipMapLinear). Without them, the relief normal map
+        // (amplified x3.8) and the sharp ocean glint alias every frame while the
+        // globe spins, so the surface shimmers/"shines". Mipmaps blur distant/
+        // high-frequency detail to kill that temporal aliasing.
+        t->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         t->setMagnificationFilter(QOpenGLTexture::Linear);
         t->setWrapMode(QOpenGLTexture::Repeat);
+        t->generateMipMaps();
         return t;
     };
     m_texDay      = make(m_assets->image(AssetManager::Day, cap));
