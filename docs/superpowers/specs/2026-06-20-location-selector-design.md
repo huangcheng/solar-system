@@ -33,7 +33,8 @@ src/celestial/
 ├── LocationProvider.h/.cpp    (modified — add requestOnceSystem(): one-shot Qt Positioning)
 ├── SettingsDialog.h/.cpp      (modified — city combo + detect button + auto-start + coord label; remove spinboxes)
 ├── ConfigManager.h/.cpp       (modified — add autoDetectOnStart; homeLat/Lon become set-only)
-└── data/cities.json           (NEW resource — ~2000 cities, pop > 500k)
+├── data/cities.json           (NEW resource — ~2000 cities, pop > 500k)
+├── data/ip-services.json      (NEW — loose file, ordered IP-geo services + field map; editable post-ship, no recompile)
 src/apps/earth/main.cpp        (modified — wire detect results + startup auto-detect)
 ```
 
@@ -45,12 +46,10 @@ src/apps/earth/main.cpp        (modified — wire detect results + startup auto-
 - `QList<CityEntry> search(const QString&)` / a model for a searchable combo (city + country).
 - `std::optional<CityEntry> findExact("City, Country")`.
 
-### 2. `IpLocator` (network, fallback chain)
+### 2. `IpLocator` (network, fallback chain — **data-driven, not hardcoded**)
 - One public method `request()`; emits `located(double lat, double lon, const QString &city)` or `failed()`.
-- Tries in order, ~3 s timeout each, first valid JSON with lat/lon wins:
-  1. `http://ip-api.com/json/`  → `lat`, `lon`, `city`
-  2. `https://ipinfo.io/json/`  → `loc` ("lat,lon"), `city`
-  3. `https://ipapi.co/json/`   → `latitude`, `longitude`, `city`
+- Reads the ordered service list from a **bundled `data/ip-services.json`** — a loose file shipped next to the exe, so it can be **edited or replaced without recompiling or reshipping the binary**. Each entry: `{name, url, latField, lonField, cityField, timeoutSec}`. (Services with a combined `"loc":"lat,lon"` field use `locField` + `locSeparator` instead of separate lat/lon fields.) `IpLocator` iterates the list in file order, each entry's timeout (default 3 s), and the first valid JSON with lat/lon wins.
+- Default `data/ip-services.json` ships `ip-api → ipinfo → ipapi.co` as a starting set. A **compiled-in minimal default** is used only if the loose file is missing/corrupt (so deleting the file never breaks the app).
 - Uses `QNetworkAccessManager`. Cancel pending + stop on first success. No API keys.
 
 ### 3. `LocationProvider` (system) — add one-shot
@@ -83,7 +82,7 @@ City pick / System detect / IP detect → `config.setHomeLatitude/Longitude` + `
 |----------|----------|
 | Manual lat/lon input | Removed — replaced by city selector |
 | City list size | ~2000 (population > 500k), from SimpleMaps worldcities |
-| IP services | Chain: ip-api.com → ipinfo.io → ipapi.co (3 s timeout each) |
+| IP services | **Config-file-driven** (`data/ip-services.json`, loose/editable, no recompile to change): default chain ip-api → ipinfo → ipapi.co (3 s each); compiled-in minimal fallback if the file is missing/corrupt |
 | Auto-detect on startup | Off by default |
 | Continuous tracking | No — one-shot detects only (startup auto-detect is one-shot) |
 | Marker visibility | `showHomeMarker`; a successful detect auto-enables it |
@@ -93,10 +92,12 @@ City pick / System detect / IP detect → `config.setHomeLatitude/Longitude` + `
 - No network / all IP services fail → "Detect failed" in label; city selector still works offline.
 - No OS location backend → system detect fails gracefully; city/IP still work.
 - City list missing/empty resource → selector empty but app doesn't crash.
+- `ip-services.json` missing/corrupt → `IpLocator` uses the compiled-in minimal default (no crash; still tries at least one service).
 
 ## Testing
 - Unit: `CityDatabase` loads + `findExact` returns correct coords for a known city.
-- Unit: `IpLocator` parsing with canned JSON (no network) — verify each service's field extraction.
+- Unit: `IpLocator` parsing with canned JSON (no network) — verify each service's field extraction, including the combined `loc` form.
+- Unit: `IpLocator` reads `ip-services.json` and falls back to the compiled-in default when the file is missing/corrupt.
 - Unit: `ConfigManager.autoDetectOnStart` round-trip.
 - Visual: each of the 3 sources sets the marker; auto-start triggers system detect on launch.
 
