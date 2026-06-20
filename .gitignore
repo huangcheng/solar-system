@@ -82,6 +82,7 @@ CMakeLists.txt.user*
 .uic/
 /build*/
 /.qtcreator/
+/dist/
 
 # Brainstorming visual-companion artifacts
 /.superpowers/

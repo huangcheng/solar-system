@@ -19,6 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets Positioning Network LinguistTools Test)
 
 qt_standard_project_setup()
+include(GNUInstallDirs)
 
 # Generic, app-agnostic celestial mechanics / camera / asset loading shared by
 # every body widget (earth, sun, mars, ...). Kept as a separate STATIC library
@@ -105,7 +106,7 @@ install(TARGETS earth
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-install(FILES src/celestial/data/ip-services.json DESTINATION data)
+install(FILES src/celestial/data/ip-services.json DESTINATION ${CMAKE_INSTALL_BINDIR}/data)
 
 qt_generate_deploy_app_script(TARGET earth OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 install(SCRIPT ${deploy_script})
