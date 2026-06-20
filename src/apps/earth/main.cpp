@@ -68,6 +68,7 @@ int main(int argc, char *argv[]) {
 
     widget.move(config.windowX(), config.windowY());
     widget.resize(config.diameter(), config.diameter());
+    widget.setWindowIcon(QIcon(QStringLiteral(":/data/icon.png")));
 
     LocationProvider location;
     widget.applyOptionsFromConfig();  // sets home location, grid, night mode, rotation speed

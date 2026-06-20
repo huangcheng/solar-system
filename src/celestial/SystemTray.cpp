@@ -5,9 +5,7 @@
 #include <QPixmap>
 
 SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
-    QPixmap pm(16, 16);
-    pm.fill(QColor(40, 96, 200));
-    setIcon(QIcon(pm));
+    setIcon(QIcon(QStringLiteral(":/data/icon.png")));
     buildMenu();
     setContextMenu(m_menu);
     show();
