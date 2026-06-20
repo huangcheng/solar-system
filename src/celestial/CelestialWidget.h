@@ -29,6 +29,10 @@ public:
     // given coordinates. Idempotent; enabling once keeps it on across repaints.
     void setHomeLocation(double lat, double lon);
 
+    enum class ViewMode { Globe, FlatMap };
+    void setViewMode(ViewMode m);
+    ViewMode viewMode() const { return m_viewMode; }
+
 signals:
     // Fired on camera drag / wheel so owners (e.g. TimeController) can boost
     // their repaint rate during interaction.
@@ -57,4 +61,5 @@ private:
     QPoint m_lastPos;
     bool m_moveGesture = false;  // true while an Alt-drag/middle-drag window move is in progress
     bool m_hasLocationFix = false;  // a real GPS/IP fix has been received (gates the home beacon)
+    ViewMode m_viewMode = ViewMode::Globe;
 };

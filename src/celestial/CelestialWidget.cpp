@@ -65,6 +65,24 @@ void CelestialWidget::setHomeLocation(double lat, double lon) {
     update();
 }
 
+void CelestialWidget::setViewMode(ViewMode m) {
+    if (m_viewMode == m) return;
+    m_viewMode = m;   // set BEFORE resize() so the resizeEvent sees the new mode
+    const int w = width();
+    const QPoint c = geometry().center();
+    if (m == ViewMode::FlatMap) {
+        const int newH = qMax(120, w / 2);          // 2:1 keeping the width
+        resize(w, newH);
+        move(c - QPoint(w / 2, newH / 2));
+        clearMask();
+    } else {
+        resize(w, w);                                // square again
+        move(c - QPoint(w / 2, w / 2));
+        // elliptical mask re-applied by resizeEvent()
+    }
+    update();
+}
+
 void CelestialWidget::initializeGL() {
     m_gl = std::make_unique<QOpenGLFunctions_3_3_Core>();
     if (!m_gl->initializeOpenGLFunctions())
@@ -77,7 +95,10 @@ void CelestialWidget::resizeGL(int w, int h) {
 }
 
 void CelestialWidget::paintGL() {
-    m_body.render();
+    if (m_viewMode == ViewMode::FlatMap)
+        m_body.renderMap();
+    else
+        m_body.render();
 }
 
 void CelestialWidget::showEvent(QShowEvent *e) {
@@ -87,9 +108,13 @@ void CelestialWidget::showEvent(QShowEvent *e) {
 
 void CelestialWidget::resizeEvent(QResizeEvent *e) {
     QOpenGLWidget::resizeEvent(e);
-    const int side = qMin(width(), height());
-    const QRect r((width() - side) / 2, (height() - side) / 2, side, side);
-    setMask(QRegion(r, QRegion::Ellipse));
+    if (m_viewMode == ViewMode::Globe) {
+        const int side = qMin(width(), height());
+        const QRect r((width() - side) / 2, (height() - side) / 2, side, side);
+        setMask(QRegion(r, QRegion::Ellipse));
+    } else {
+        clearMask();   // flat map: rectangular widget
+    }
 }
 
 void CelestialWidget::mousePressEvent(QMouseEvent *e) {
@@ -106,7 +131,7 @@ void CelestialWidget::mouseMoveEvent(QMouseEvent *e) {
         window()->move(window()->pos() + g - m_lastPos);
         m_lastPos = g;
         m_moveGesture = true;  // defer config.save() to mouseReleaseEvent
-    } else if ((e->buttons() & Qt::LeftButton) && m_cam) {
+    } else if (m_viewMode == ViewMode::Globe && (e->buttons() & Qt::LeftButton) && m_cam) {
         const QPoint d = g - m_lastPos;
         m_lastPos = g;
         m_cam->applyDrag(d.x(), d.y());
@@ -130,21 +155,27 @@ void CelestialWidget::mouseReleaseEvent(QMouseEvent *e) {
 
 void CelestialWidget::wheelEvent(QWheelEvent *e) {
     const int delta = e->angleDelta().y();
-    const int newSide = qBound(160, int(width() + delta * 0.3), 1024);
-    if (newSide == width()) { QOpenGLWidget::wheelEvent(e); return; }
-    const QPoint center = window()->geometry().center();
-    window()->resize(newSide, newSide);
-    window()->move(center - QPoint(newSide / 2, newSide / 2));
-    if (m_config) {
-        m_config->setDiameter(newSide);
-        m_config->save();
+    const QPoint center = geometry().center();
+    if (m_viewMode == ViewMode::FlatMap) {
+        const int newW = qBound(240, int(width() + delta * 0.3), 1024);   // >=240 so height>=120
+        if (newW == width()) { QOpenGLWidget::wheelEvent(e); return; }
+        const int newH = qMax(120, newW / 2);
+        resize(newW, newH);
+        move(center - QPoint(newW / 2, newH / 2));
+    } else {
+        const int newSide = qBound(160, int(width() + delta * 0.3), 1024);
+        if (newSide == width()) { QOpenGLWidget::wheelEvent(e); return; }
+        resize(newSide, newSide);
+        move(center - QPoint(newSide / 2, newSide / 2));
     }
-    update();
+    if (m_config) { m_config->setDiameter(width()); m_config->save(); }
     emit userInteracted();  // let TimeController boost its repaint rate
+    update();
     QOpenGLWidget::wheelEvent(e);
 }
 
 void CelestialWidget::mouseDoubleClickEvent(QMouseEvent *e) {
+    if (m_viewMode == ViewMode::FlatMap) { QOpenGLWidget::mouseDoubleClickEvent(e); return; }
     if (m_cam) {
         m_cam->reset();
         // Double-click is a camera-orientation reset, not a size reset: leave
