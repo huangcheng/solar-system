@@ -42,9 +42,11 @@ bool AssetManager::hasFile(Slot slot) const {
 QImage AssetManager::fallback(Slot slot) {
     QImage img(512, 256, QImage::Format_RGB32);
     switch (slot) {
-    case Day:    img.fill(QColor(30, 70, 150));  break;  // ocean blue
-    case Night:  img.fill(QColor(0, 0, 0));      break;
-    case Clouds: img.fill(QColor(0, 0, 0));      break;  // no clouds
+    case Day:      img.fill(QColor(30, 70, 150));    break;  // ocean blue
+    case Night:    img.fill(QColor(0, 0, 0));        break;
+    case Clouds:   img.fill(QColor(0, 0, 0));        break;  // no clouds
+    case Normal:   img.fill(QColor(128, 128, 255));  break;  // neutral +Z tangent-space normal (flat)
+    case Specular: img.fill(QColor(0, 0, 0));        break;  // no specular / dry everywhere
     }
     return img;
 }
