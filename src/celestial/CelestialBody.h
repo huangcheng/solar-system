@@ -45,6 +45,7 @@ public:
 
     void resize(int w, int h, float devicePixelRatio);
     void render();
+    void renderMap();   // flat equirectangular map (flat-map mode)
 
     // Pure, GL-free sun-centric rotation: maps the sub-solar point (lat,lon)
     // onto +Z so the lit hemisphere faces the camera. Unit-testable.
@@ -63,6 +64,9 @@ private:
     std::unique_ptr<QOpenGLTexture> m_texDay, m_texNight, m_texClouds, m_texNormal, m_texSpecular;
     GLuint m_vao = 0, m_vbo = 0, m_ibo = 0;
     int m_indexCount = 0;
+    std::unique_ptr<QOpenGLShaderProgram> m_mapProg;
+    GLuint m_quadVao = 0, m_quadVbo = 0, m_quadIbo = 0;
+    void buildQuad();
     float m_aspect = 1.0f;
     float m_dpr = 1.0f;
     int m_w = 0, m_h = 0;

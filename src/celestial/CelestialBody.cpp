@@ -92,6 +92,31 @@ void CelestialBody::buildSphere(int stacks, int slices) {
     m_gl->glBindVertexArray(0);
 }
 
+void CelestialBody::buildQuad() {
+    // 4 corners: (clip-space pos xy, uv xy) — BL, BR, TR, TL
+    const float verts[] = {
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f,
+        -1.0f,  1.0f,  0.0f, 1.0f,
+    };
+    const GLuint idx[] = { 0, 1, 2, 0, 2, 3 };
+
+    m_gl->glGenVertexArrays(1, &m_quadVao);
+    m_gl->glGenBuffers(1, &m_quadVbo);
+    m_gl->glGenBuffers(1, &m_quadIbo);
+    m_gl->glBindVertexArray(m_quadVao);
+    m_gl->glBindBuffer(GL_ARRAY_BUFFER, m_quadVbo);
+    m_gl->glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+    m_gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_quadIbo);
+    m_gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idx), idx, GL_STATIC_DRAW);
+    m_gl->glEnableVertexAttribArray(0);
+    m_gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), nullptr);
+    m_gl->glEnableVertexAttribArray(1);
+    m_gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void *>(2 * sizeof(float)));
+    m_gl->glBindVertexArray(0);
+}
+
 void CelestialBody::loadTextures() {
     // Cap at 4K: the widget is small, and 8K would just add memory + shimmer.
     const int cap = qMin(m_tierMaxSize, 4096);
@@ -156,6 +181,8 @@ void CelestialBody::initialize(QOpenGLFunctions_3_3_Core *gl) {
     m_cloudProg = makeProgram("clouds.vert", "clouds.frag");
     m_atmoProg  = makeProgram("atmosphere.vert", "atmosphere.frag");
     buildSphere(128, 256);
+    m_mapProg = makeProgram("map.vert", "map.frag");
+    buildQuad();
     if (m_assets) loadTextures();
 }
 
@@ -293,4 +320,38 @@ void CelestialBody::render() {
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
     m_gl->glDisable(GL_CULL_FACE);
     m_gl->glDepthMask(GL_TRUE);
+}
+
+void CelestialBody::renderMap() {
+    if (!m_gl) return;
+    m_gl->glClearColor(0.02f, 0.03f, 0.05f, 1.0f);
+    m_gl->glDisable(GL_DEPTH_TEST);
+    m_gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // The map is fixed ECEF: use the REAL wall-clock sun (no spin), unlike the
+    // 3D path which paints sunWorld onto the spinning globe.
+    const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
+
+    m_mapProg->bind();
+    m_mapProg->setUniformValue("uSunDir", sun);
+    m_mapProg->setUniformValue("uHasDay", m_texDay ? 1.0f : 0.0f);
+    m_mapProg->setUniformValue("uHasNight", m_texNight ? 1.0f : 0.0f);
+    m_mapProg->setUniformValue("uUseNightTexture", m_opts.useNightTexture ? 1.0f : 0.0f);
+    m_mapProg->setUniformValue("uShowGrid", m_opts.showGrid ? 1.0f : 0.0f);
+    m_mapProg->setUniformValue("uHasHome", m_opts.hasHome ? 1.0f : 0.0f);
+    {
+        const double la = qDegreesToRadians(m_opts.homeLat);
+        const double lo = qDegreesToRadians(m_opts.homeLon);
+        const QVector3D homeDir(float(std::cos(la) * std::cos(lo)),
+                                float(std::cos(la) * std::sin(lo)),
+                                float(std::sin(la)));
+        m_mapProg->setUniformValue("uHomeDir", homeDir);
+    }
+    m_mapProg->setUniformValue("uTime", float(std::fmod(QDateTime::currentMSecsSinceEpoch() / 1000.0, 600.0)));
+    if (m_texDay)   { m_texDay->bind(0);   m_mapProg->setUniformValue("uDay", 0); }
+    if (m_texNight) { m_texNight->bind(1); m_mapProg->setUniformValue("uNight", 1); }
+
+    m_gl->glBindVertexArray(m_quadVao);
+    m_gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    m_gl->glBindVertexArray(0);
 }
