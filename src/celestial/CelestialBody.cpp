@@ -92,7 +92,67 @@ void CelestialBody::buildSphere(int stacks, int slices) {
     m_gl->glBindVertexArray(0);
 }
 
+void CelestialBody::buildRingQuad() {
+    // Flat annulus in the EQUATORIAL plane. The sphere is Z-up (buildSphere
+    // sets z = sin(lat), so +Z is the pole and the equator lives in XY), so
+    // the ring must lie in the XY plane to sit in the body's equatorial plane
+    // — the spec's literal "XZ plane" assumes a Y-up convention this codebase
+    // does not use. The model matrix (axial tilt + spin) then tips the annulus
+    // to the classic Saturn viewing angle.
+    //
+    // Geometry: location 0 = vec3 aPos, location 1 = vec2 aUv (matches
+    // ring.vert). UV.x is the radial fraction [0..1] across the ring texture
+    // (0 = inner edge, 1 = outer edge); UV.y is the angular position around
+    // the ring [0..1] so the (repeat-wrapped) texture tiles seamlessly.
+    const int segments = 64;
+    const float innerR = 1.3f, outerR = 2.2f;   // unit-sphere space; sphere r=1
+    QVector<float> verts; QVector<GLuint> idx;
+    for (int i = 0; i <= segments; ++i) {
+        const float ang = float(2.0 * kPi * double(i) / segments);
+        const float ca = float(std::cos(ang)), sa = float(std::sin(ang));
+        const float v = float(i) / float(segments);
+        // inner vertex: pos(innerR*ca, innerR*sa, 0), uv(0, v)
+        verts << innerR * ca << innerR * sa << 0.0f << 0.0f << v;
+        // outer vertex: pos(outerR*ca, outerR*sa, 0), uv(1, v)
+        verts << outerR * ca << outerR * sa << 0.0f << 1.0f << v;
+    }
+    for (int i = 0; i < segments; ++i) {
+        const int a = 2 * i, b = a + 1, c = a + 2, d = a + 3;
+        idx << GLuint(a) << GLuint(b) << GLuint(c)
+            << GLuint(b) << GLuint(d) << GLuint(c);
+    }
+    m_ringIndexCount = idx.size();
+
+    m_gl->glGenVertexArrays(1, &m_ringVao);
+    m_gl->glGenBuffers(1, &m_ringVbo);
+    m_gl->glGenBuffers(1, &m_ringIbo);
+    m_gl->glBindVertexArray(m_ringVao);
+    m_gl->glBindBuffer(GL_ARRAY_BUFFER, m_ringVbo);
+    m_gl->glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(float), verts.data(), GL_STATIC_DRAW);
+    m_gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ringIbo);
+    m_gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+    // interleaved: vec3 pos | vec2 uv  → stride 5 floats
+    const int stride = 5 * sizeof(float);
+    m_gl->glEnableVertexAttribArray(0);
+    m_gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, nullptr);
+    m_gl->glEnableVertexAttribArray(1);
+    m_gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<void*>(3 * sizeof(float)));
+    m_gl->glBindVertexArray(0);
+}
+
 void CelestialBody::loadTextures() {
+    // Body-agnostic loading: every texture is fetched by its BodyConfig filename
+    // via AssetManager::image(QString,int), so one renderer serves Earth, the
+    // Moon, every planet and the Sun. A field that is empty in the config (e.g.
+    // the Moon has no night/specular map) is simply not loaded, and the shader's
+    // uHas* flag falls back to its procedural path.
+    //
+    // EARTH IS UNCHANGED: BodyConfig::earth() lists day.jpg / night.jpg /
+    // normal.png / specular.png — exactly the files AssetManager::fileName(Slot)
+    // returned before, so the same files load through the new filename-based
+    // API and Earth's day/night terminator, relief and ocean glint are
+    // byte-identical to Phase 1.
+    //
     // Cap at 4K: the widget is small, and linear (no-mipmap) filtering on an
     // 8K texture would shimmer. 4K is plenty sharp for <= ~1000 px on screen.
     const int cap = qMin(m_tierMaxSize, 4096);
@@ -107,18 +167,19 @@ void CelestialBody::loadTextures() {
         t->setWrapMode(QOpenGLTexture::Repeat);
         return t;
     };
-    m_texDay      = make(m_assets->image(AssetManager::Day, cap));
-    m_texNight    = make(m_assets->image(AssetManager::Night, cap));
-    // Cloud layer disabled: at full opacity it hid the terrain. The earth should
-    // read as bare land/mountains/sea. (clouds.* shaders are kept and the draw
-    // pass self-skips when m_texClouds is null, so it's a one-line re-enable.)
-    // m_texClouds  = make(m_assets->image(AssetManager::Clouds, cap));
-    // Normal (terrain relief) + specular (ocean water mask) re-enabled. The old
-    // seam came from a screen-space derivative tangent basis; earth.frag now
-    // builds the tangent frame analytically from the sphere, and the glint is
-    // water-masked + subtle (no glassy sheen).
-    m_texNormal   = make(m_assets->image(AssetManager::Normal, cap));
-    m_texSpecular = make(m_assets->image(AssetManager::Specular, cap));
+    if (!m_config.albedoTexture.isEmpty())
+        m_texDay      = make(m_assets->image(m_config.albedoTexture, cap));
+    if (!m_config.nightTexture.isEmpty())
+        m_texNight    = make(m_assets->image(m_config.nightTexture, cap));
+    // Cloud layer disabled (see render()): at full opacity it hid the terrain.
+    // clouds.* shaders are kept and the draw pass self-skips when m_texClouds
+    // is null, so re-enabling is a one-line change once a body needs it.
+    if (!m_config.normalTexture.isEmpty())
+        m_texNormal   = make(m_assets->image(m_config.normalTexture, cap));
+    if (!m_config.specularTexture.isEmpty())
+        m_texSpecular = make(m_assets->image(m_config.specularTexture, cap));
+    if (m_config.hasRings && !m_config.ringTexture.isEmpty())
+        m_texRing     = make(m_assets->image(m_config.ringTexture, cap));
 }
 
 QMatrix4x4 CelestialBody::sunCentricBaseRotation(double subSolarLatDeg, double subSolarLonDeg) {
@@ -152,9 +213,20 @@ QMatrix4x4 CelestialBody::sunCentricBaseRotation(double subSolarLatDeg, double s
 
 void CelestialBody::initialize(QOpenGLFunctions_3_3_Core *gl) {
     m_gl = gl;
-    m_earthProg = makeProgram("earth.vert", "earth.frag");
-    m_cloudProg = makeProgram("clouds.vert", "clouds.frag");
-    m_atmoProg  = makeProgram("atmosphere.vert", "atmosphere.frag");
+    if (m_config.emissive) {
+        // Sun: a single emissive program (star.vert/frag). No day/night
+        // terminator, no clouds, no atmosphere shell — those programs are not
+        // built and stay null, so the planet render path self-skips them.
+        m_starProg = makeProgram("star.vert", "star.frag");
+    } else {
+        m_earthProg = makeProgram("earth.vert", "earth.frag");
+        m_cloudProg = makeProgram("clouds.vert", "clouds.frag");
+        m_atmoProg  = makeProgram("atmosphere.vert", "atmosphere.frag");
+    }
+    if (m_config.hasRings) {
+        m_ringProg = makeProgram("ring.vert", "ring.frag");
+        buildRingQuad();
+    }
     buildSphere(128, 256);
     if (m_assets) loadTextures();
 }
@@ -173,7 +245,7 @@ void CelestialBody::setQualityTier(int maxSize) {
     if (maxSize == m_tierMaxSize) return;
     m_tierMaxSize = maxSize;
     m_texDay.reset(); m_texNight.reset(); m_texClouds.reset();
-    m_texNormal.reset(); m_texSpecular.reset();
+    m_texNormal.reset(); m_texSpecular.reset(); m_texRing.reset();
     if (m_gl && m_assets) loadTextures();
 }
 
@@ -222,6 +294,33 @@ void CelestialBody::render() {
     }
     model.scale(1.0f);   // globe always fills the widget disc — wheel resizes the widget, not the 3D model
 
+    if (m_config.emissive) {
+        // Sun (emissive). No day/night terminator, no atmosphere shell, no
+        // rings in practice. The star program reads the SAME unit-sphere VAO
+        // as Earth (star.vert is an exact mirror of earth.vert) but has its
+        // OWN uniform locations, so every uniform below must be set every
+        // frame — uViewPos included, since without it the limb-darkening
+        // term in star.frag reads garbage. uTime matches the Earth path's
+        // float(std::fmod(ms/1000, 600)) convention so the pulse stays precise.
+        m_gl->glEnable(GL_DEPTH_TEST);
+        m_starProg->bind();
+        m_starProg->setUniformValue("uMVP", proj * view * model);
+        m_starProg->setUniformValue("uModel", model);
+        m_starProg->setUniformValue("uViewPos", QVector3D(0, 0, 3.25));
+        m_starProg->setUniformValue("uHasDay", m_texDay ? 1.0f : 0.0f);
+        m_starProg->setUniformValue("uTime", float(std::fmod(QDateTime::currentMSecsSinceEpoch() / 1000.0, 600.0)));
+        if (m_texDay) { m_texDay->bind(0); m_starProg->setUniformValue("uDay", 0); }
+        m_gl->glBindVertexArray(m_vao);
+        m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
+        return;  // emissive path: no clouds/atmosphere/rings pass to follow
+    }
+
+    // Planet path (Earth / Moon / Mars / Saturn / ...): the existing day/night
+    // /clouds/atmosphere pipeline. Textures now arrive via BodyConfig filenames
+    // (see loadTextures); a body without a night or specular map simply sets
+    // uHas*=0 and the shader falls back. The math, uniforms and matrix
+    // construction below are UNCHANGED from Phase 1 — Earth's day/night
+    // terminator is byte-identical.
     const QVector3D sun = m_sun ? m_sun->sunDirection() : QVector3D(1, 0, 0);
     // Derive sunWorld from the FULL model (including spin) so the day/night
     // terminator is "painted" onto the globe surface: it stays glued to the
@@ -293,4 +392,24 @@ void CelestialBody::render() {
     m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
     m_gl->glDisable(GL_CULL_FACE);
     m_gl->glDepthMask(GL_TRUE);
+
+    // Rings (Saturn). Drawn AFTER the body sphere + atmosphere, using the SAME
+    // model matrix as the planet so the annulus lies in the body's equatorial
+    // plane and follows its orientation/tilt/spin. The ring texture carries
+    // alpha (Cassini division and gaps), so blend on + depth-write off: the
+    // ring must not z-fight the planet silhouette or occlude itself across
+    // the annulus. Depth-write is restored afterwards so the next frame's
+    // clear starts from a clean depth buffer.
+    if (m_config.hasRings && m_texRing && m_ringProg) {
+        m_gl->glDepthMask(GL_FALSE);
+        m_gl->glEnable(GL_BLEND);
+        m_gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        m_ringProg->bind();
+        m_ringProg->setUniformValue("uMVP", proj * view * model);
+        m_texRing->bind(0);
+        m_ringProg->setUniformValue("uRing", 0);
+        m_gl->glBindVertexArray(m_ringVao);
+        m_gl->glDrawElements(GL_TRIANGLES, m_ringIndexCount, GL_UNSIGNED_INT, nullptr);
+        m_gl->glDepthMask(GL_TRUE);
+    }
 }

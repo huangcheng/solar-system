@@ -60,14 +60,20 @@ private:
     int m_tierMaxSize = 8192;
 
     std::unique_ptr<QOpenGLShaderProgram> m_earthProg, m_cloudProg, m_atmoProg;
+    std::unique_ptr<QOpenGLShaderProgram> m_starProg;   // emissive (Sun) — null for planets
+    std::unique_ptr<QOpenGLShaderProgram> m_ringProg;   // Saturn rings — null unless hasRings
     std::unique_ptr<QOpenGLTexture> m_texDay, m_texNight, m_texClouds, m_texNormal, m_texSpecular;
+    std::unique_ptr<QOpenGLTexture> m_texRing;          // Saturn ring texture
     GLuint m_vao = 0, m_vbo = 0, m_ibo = 0;
     int m_indexCount = 0;
+    GLuint m_ringVao = 0, m_ringVbo = 0, m_ringIbo = 0;
+    int m_ringIndexCount = 0;
     float m_aspect = 1.0f;
     float m_dpr = 1.0f;
     int m_w = 0, m_h = 0;
 
     void buildSphere(int stacks, int slices);
+    void buildRingQuad();          // annulus in the equatorial (XY) plane
     void loadTextures();
     std::unique_ptr<QOpenGLShaderProgram> makeProgram(const QString &vertAlias, const QString &fragAlias);
 };
