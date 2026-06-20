@@ -1,5 +1,6 @@
 #include <QtTest/QtTest>
 #include <QList>
+#include <QSet>
 #include "celestial/BodyConfig.h"
 
 class TestBodyConfig : public QObject {
@@ -7,6 +8,7 @@ class TestBodyConfig : public QObject {
 private slots:
     void earthDefaults();
     void allFactoriesProduceValidConfig();
+    void bodyIdsAreUnique();
     void sunIsEmissive();
     void saturnHasRingsAndRingTexture();
     void planetsHaveOrbitalElements();
@@ -34,7 +36,25 @@ void TestBodyConfig::allFactoriesProduceValidConfig() {
         QVERIFY2(!c.displayName.isEmpty(), qPrintable(c.bodyId + " missing displayName"));
         QVERIFY2(!c.albedoTexture.isEmpty(), qPrintable(c.bodyId + " missing albedo"));
         QVERIFY2(c.radiusKm > 0.0f, qPrintable(c.bodyId + " bad radius"));
+        QVERIFY2(c.semiMajorAxisAU >= 0.0f, qPrintable(c.bodyId + " negative semi-major axis"));
+        QVERIFY2(c.eccentricity >= 0.0f && c.eccentricity < 1.0f,
+                 qPrintable(c.bodyId + " eccentricity out of [0,1)"));
     }
+}
+
+void TestBodyConfig::bodyIdsAreUnique() {
+    QList<BodyConfig> all = {
+        BodyConfig::sun(), BodyConfig::moon(), BodyConfig::mercury(),
+        BodyConfig::venus(), BodyConfig::earth(), BodyConfig::mars(),
+        BodyConfig::jupiter(), BodyConfig::saturn(),
+        BodyConfig::uranus(), BodyConfig::neptune(),
+    };
+    QSet<QString> ids;
+    for (const BodyConfig& c : all) {
+        QVERIFY2(!ids.contains(c.bodyId), qPrintable("duplicate bodyId: " + c.bodyId));
+        ids.insert(c.bodyId);
+    }
+    QCOMPARE(ids.size(), 10);
 }
 
 void TestBodyConfig::sunIsEmissive() {

@@ -13,7 +13,7 @@ struct BodyConfig {
 
     float radiusKm = 6371.0f;
     float visualScale = 1.0f;
-    float rotationPeriodHours = 24.0f;
+    float rotationPeriodHours = 24.0f;  // sidereal; negative = retrograde rotation
     float axialTiltDegrees = 23.5f;
     bool emissive = false;
     bool hasRings = false;
