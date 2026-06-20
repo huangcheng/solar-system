@@ -73,7 +73,7 @@ foreach(body ${PHASE2_BODIES})
     target_link_libraries(${body} PRIVATE celestial)
 endforeach()
 
-qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
+qt_add_translations(TARGETS earth ${PHASE2_BODIES} TS_FILES globe_zh_CN.ts)
 
 install(TARGETS earth
     BUNDLE  DESTINATION .

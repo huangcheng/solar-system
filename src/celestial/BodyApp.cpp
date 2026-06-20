@@ -79,7 +79,8 @@ int runBodyApp(int argc, char *argv[], const BodyConfig& config) {
     time.setTarget(&widget);
     time.setFpsCap(cm.fpsCap());
 
-    SystemTray tray;
+    SystemTray tray(false);  // no "Center on Me" — body apps don't wire it up
+    tray.setSolarTooltip(config.displayName);  // static body-name tooltip
     SettingsDialog settingsDialog(&cm, &widget);
     QObject::connect(&tray, &SystemTray::toggleVisibility, &widget,
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });

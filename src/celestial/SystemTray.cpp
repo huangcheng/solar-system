@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <QPixmap>
 
-SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
+SystemTray::SystemTray(bool enableCenterOnMe, QObject *parent) : QSystemTrayIcon(parent) {
     QPixmap pm(16, 16);
     pm.fill(QColor(40, 96, 200));
     setIcon(QIcon(pm));
@@ -12,7 +12,8 @@ SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
     auto *menu = new QMenu;
     menu->addAction(tr("Hide/Show"), this, &SystemTray::toggleVisibility);
     menu->addAction(tr("Reset View"), this, &SystemTray::resetView);
-    menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
+    if (enableCenterOnMe)
+        menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
     menu->addSeparator();
     menu->addAction(tr("Settings..."), this, &SystemTray::openSettings);
     menu->addSeparator();
