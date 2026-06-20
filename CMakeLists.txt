@@ -4,7 +4,7 @@ project(globe LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets Positioning LinguistTools Test)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets Positioning Network LinguistTools Test)
 
 qt_standard_project_setup()
 
@@ -43,6 +43,8 @@ qt_add_library(celestial STATIC
     src/celestial/CityDatabase.h
     src/celestial/CityDatabase.cpp
     src/celestial/cities.qrc
+    src/celestial/IpLocator.h
+    src/celestial/IpLocator.cpp
 )
 
 target_include_directories(celestial PUBLIC
@@ -56,7 +58,7 @@ target_include_directories(celestial PUBLIC
 set_target_properties(celestial PROPERTIES AUTORCC ON)
 
 target_link_libraries(celestial PUBLIC
-    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
+    Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning Qt::Network
 )
 
 if(WIN32)
@@ -71,10 +73,20 @@ target_link_libraries(earth PRIVATE celestial)
 
 qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
 
+# Ship the editable IP service list next to the built earth.exe so it can be
+# tuned post-ship without a recompile. IpLocator reads appDir/data/ip-services.json
+# and falls back to a compiled-in default if the file is missing/corrupt.
+add_custom_command(TARGET earth POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:earth>/data"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/celestial/data/ip-services.json"
+        "$<TARGET_FILE_DIR:earth>/data/ip-services.json")
+
 install(TARGETS earth
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+install(FILES src/celestial/data/ip-services.json DESTINATION data)
 
 qt_generate_deploy_app_script(TARGET earth OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 install(SCRIPT ${deploy_script})
