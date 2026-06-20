@@ -45,6 +45,9 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("Globe");
 
     ConfigManager config;
+    // Keep the OS login entry synced with the current exe path (and remove it
+    // if the user disabled launch-on-login elsewhere).
+    ConfigManager::applyLaunchOnLogin(config.launchOnLogin());
 
     QTranslator translator;
     if (config.language() == QStringLiteral("zh_CN")) {

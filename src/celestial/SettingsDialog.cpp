@@ -50,6 +50,10 @@ void SettingsDialog::setupUi() {
     m_alwaysOnTopCheck->setChecked(m_config->alwaysOnTop());
     form->addRow(m_alwaysOnTopCheck);
 
+    m_launchOnLoginCheck = new QCheckBox(tr("Start with system"));
+    m_launchOnLoginCheck->setChecked(m_config->launchOnLogin());
+    form->addRow(m_launchOnLoginCheck);
+
     m_markerCheck = new QCheckBox(tr("Show home marker"));
     m_markerCheck->setChecked(m_config->showHomeMarker());
     form->addRow(m_markerCheck);
@@ -241,15 +245,14 @@ void SettingsDialog::onCoordsEdited() {
     const double lat = m_latSpin->value();
     const double lon = m_lonSpin->value();
     commitLocation(lat, lon);
-    // Exact lat/lon match against the city DB (round to 4 decimals). Only
-    // update the combo on a real hit; otherwise leave the current text as-is.
-    const auto &cities = CityDatabase::instance().all();
-    for (const CityEntry &c : cities) {
-        if (qRound(c.lat * 10000.0) == qRound(lat * 10000.0) &&
-            qRound(c.lon * 10000.0) == qRound(lon * 10000.0)) {
-            const int idx = m_cityCombo->findText(c.display());
+    // Snap the city combo to the nearest bundled city for the typed coordinates.
+    // Hand-typed lat/lon almost never match a city's stored coords exactly, so
+    // the old exact-match test left the combo stale while the marker moved.
+    if (m_cityCombo) {
+        const auto nearest = CityDatabase::instance().findNearest(lat, lon);
+        if (nearest) {
+            const int idx = m_cityCombo->findText(nearest->display());
             if (idx >= 0) m_cityCombo->setCurrentIndex(idx);   // programmatic: no activated re-fire
-            break;
         }
     }
 }
@@ -258,6 +261,7 @@ void SettingsDialog::retranslateUi() {
     setWindowTitle(tr("Settings"));
     m_gridCheck->setText(tr("Show Grid"));
     m_alwaysOnTopCheck->setText(tr("Always on Top"));
+    m_launchOnLoginCheck->setText(tr("Start with system"));
     m_markerCheck->setText(tr("Show home marker"));
     m_autoStartCheck->setText(tr("Auto-detect on startup"));
     m_langLabel->setText(tr("Language:"));
@@ -299,6 +303,9 @@ void SettingsDialog::accept() {
     m_config->setViewMode(m_viewModeCombo->currentData().toString());
     m_config->setShowHomeMarker(m_markerCheck->isChecked());
     m_config->setAutoDetectOnStart(m_autoStartCheck->isChecked());
+    const bool launch = m_launchOnLoginCheck->isChecked();
+    m_config->setLaunchOnLogin(launch);
+    ConfigManager::applyLaunchOnLogin(launch);
     // Capture the latest lat/lon from the spinboxes (they are normally already
     // in config via editingFinished, but accept is the authoritative write).
     m_config->setHomeLatitude(m_latSpin->value());

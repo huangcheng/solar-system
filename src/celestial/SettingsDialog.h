@@ -44,6 +44,7 @@ private:
     QCheckBox *m_alwaysOnTopCheck = nullptr;
     QCheckBox *m_markerCheck = nullptr;
     QCheckBox *m_autoStartCheck = nullptr;
+    QCheckBox *m_launchOnLoginCheck = nullptr;
     QRadioButton *m_simpleNightRadio = nullptr;
     QRadioButton *m_textureNightRadio = nullptr;
     QComboBox *m_languageCombo = nullptr;

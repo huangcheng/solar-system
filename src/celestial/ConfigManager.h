@@ -27,6 +27,12 @@ public:
     bool alwaysOnTop() const;     void setAlwaysOnTop(bool v);
     QString viewMode() const;     void setViewMode(const QString &v);
     bool autoDetectOnStart() const; void setAutoDetectOnStart(bool v);
+    bool launchOnLogin() const;    void setLaunchOnLogin(bool v);
+
+    // Register/unregister the app to launch at OS login (Windows Run key,
+    // macOS LaunchAgent, Linux/XDG autostart). Idempotent — safe to call on
+    // every startup to keep the entry pointed at the current exe path.
+    static void applyLaunchOnLogin(bool enable);
 
     void load();
     void save();
@@ -46,5 +52,6 @@ private:
     QString m_viewMode  = QStringLiteral("globe");  // "globe" (3D) or "map" (flat equirectangular)
     double m_homeLat = 0.0, m_homeLon = 0.0;
     bool m_autoDetectOnStart = false;
+    bool m_launchOnLogin = false;
     static int clampDiameter(int v);
 };

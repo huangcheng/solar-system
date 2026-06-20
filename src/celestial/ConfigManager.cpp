@@ -3,6 +3,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
+#include <QCoreApplication>
+#include <QSettings>
+#include <QDir>
+#include <QTextStream>
 
 int ConfigManager::clampDiameter(int v) { return v < 160 ? 160 : (v > 1024 ? 1024 : v); }
 
@@ -49,6 +53,65 @@ void ConfigManager::setViewMode(const QString &v) {
 }
 bool ConfigManager::autoDetectOnStart() const { return m_autoDetectOnStart; }
 void ConfigManager::setAutoDetectOnStart(bool v) { m_autoDetectOnStart = v; }
+bool ConfigManager::launchOnLogin() const { return m_launchOnLogin; }
+void ConfigManager::setLaunchOnLogin(bool v) { m_launchOnLogin = v; }
+
+void ConfigManager::applyLaunchOnLogin(bool enable) {
+    QString exe = QCoreApplication::applicationFilePath();
+#if defined(Q_OS_WIN)
+    // Per-user Run key (no elevation needed). Native separators + quotes so the
+    // shell launches it verbatim at login even if the path contains spaces.
+    exe = QDir::toNativeSeparators(exe);
+    QSettings run(QStringLiteral("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
+                  QSettings::NativeFormat);
+    if (enable)
+        run.setValue(QStringLiteral("Globe"), QStringLiteral("\"%1\"").arg(exe));
+    else
+        run.remove(QStringLiteral("Globe"));
+#elif defined(Q_OS_MACOS)
+    const QString dir = QDir::homePath() + QStringLiteral("/Library/LaunchAgents");
+    const QString path = dir + QStringLiteral("/com.huangcheng.globe.plist");
+    if (enable) {
+        QDir().mkpath(dir);
+        QFile f(path);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            QTextStream s(&f);
+            s << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+              << "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
+              << "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+              << "<plist version=\"1.0\">\n<dict>\n"
+              << "  <key>Label</key><string>com.huangcheng.globe</string>\n"
+              << "  <key>ProgramArguments</key>\n  <array>\n"
+              << "    <string>" << exe << "</string>\n"
+              << "  </array>\n"
+              << "  <key>RunAtLoad</key><true/>\n"
+              << "</dict>\n</plist>\n";
+        }
+    } else {
+        QFile::remove(path);
+    }
+#else
+    // XDG autostart on Linux/*BSD.
+    const QString dir = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)
+                        + QStringLiteral("/autostart");
+    const QString path = dir + QStringLiteral("/globe.desktop");
+    if (enable) {
+        QDir().mkpath(dir);
+        QFile f(path);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            QTextStream s(&f);
+            s << "[Desktop Entry]\n"
+              << "Type=Application\n"
+              << "Name=Globe\n"
+              << "Exec=" << exe << "\n"
+              << "Terminal=false\n"
+              << "X-GNOME-Autostart-enabled=true\n";
+        }
+    } else {
+        QFile::remove(path);
+    }
+#endif
+}
 
 void ConfigManager::load() {
     QFile f(m_path);
@@ -72,6 +135,7 @@ void ConfigManager::load() {
                       ? QStringLiteral("zh_CN") : QStringLiteral("en");
     m_alwaysOnTop = obj.value("alwaysOnTop").toBool(m_alwaysOnTop);
     m_autoDetectOnStart = obj.value("autoDetectOnStart").toBool(m_autoDetectOnStart);
+    m_launchOnLogin = obj.value("launchOnLogin").toBool(m_launchOnLogin);
     m_viewMode = (obj.value("viewMode").toString(m_viewMode) == QStringLiteral("map"))
                      ? QStringLiteral("map") : QStringLiteral("globe");
 }
@@ -90,6 +154,7 @@ void ConfigManager::save() {
     o["language"]  = m_language;
     o["alwaysOnTop"] = m_alwaysOnTop;
     o["autoDetectOnStart"] = m_autoDetectOnStart;
+    o["launchOnLogin"] = m_launchOnLogin;
     o["viewMode"] = m_viewMode;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))
