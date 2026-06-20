@@ -86,18 +86,25 @@ int main(int argc, char *argv[]) {
     TimeController time(&sun);
     time.setTarget(&widget);
     time.setFpsCap(config.fpsCap());
+    // Real-time spin (rotationSpeed == 1) barely moves per frame, so idle at
+    // the low baseline; faster spins need the full fps cap to look smooth.
+    time.setAnimating(config.rotationSpeed() > 1);
+    // User drag/wheel snaps the repaint rate back up to the cap for ~2s.
+    QObject::connect(&widget, &CelestialWidget::userInteracted, &time, [&time] { time.boost(); });
 
     SystemTray tray;
     SettingsDialog settingsDialog(&config, &widget);
     QObject::connect(&tray, &SystemTray::toggleVisibility, &widget,
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });
     QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &widget,
-        [&widget, &config, &translator, &app]() {
+        [&widget, &config, &translator, &app, &time]() {
             // applyOptionsFromConfig() toggles Qt::WindowStaysOnTopHint; changing
             // window flags hides a visible widget, so capture and re-show it.
             const bool wasVisible = widget.isVisible();
             widget.applyOptionsFromConfig();
             if (wasVisible) widget.show();
+            // Spin speed may have changed: re-evaluate the adaptive baseline.
+            time.setAnimating(config.rotationSpeed() > 1);
             app.removeTranslator(&translator);
             if (config.language() == QStringLiteral("zh_CN")) {
                 if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))

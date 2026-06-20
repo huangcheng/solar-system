@@ -29,6 +29,11 @@ public:
     // given coordinates. Idempotent; enabling once keeps it on across repaints.
     void setHomeLocation(double lat, double lon);
 
+signals:
+    // Fired on camera drag / wheel so owners (e.g. TimeController) can boost
+    // their repaint rate during interaction.
+    void userInteracted();
+
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;

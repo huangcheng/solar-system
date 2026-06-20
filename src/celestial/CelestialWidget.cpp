@@ -111,6 +111,7 @@ void CelestialWidget::mouseMoveEvent(QMouseEvent *e) {
         m_lastPos = g;
         m_cam->applyDrag(d.x(), d.y());
         update();
+        emit userInteracted();  // let TimeController boost its repaint rate
     }
     QOpenGLWidget::mouseMoveEvent(e);
 }
@@ -139,6 +140,7 @@ void CelestialWidget::wheelEvent(QWheelEvent *e) {
         m_config->save();
     }
     update();
+    emit userInteracted();  // let TimeController boost its repaint rate
     QOpenGLWidget::wheelEvent(e);
 }
 
