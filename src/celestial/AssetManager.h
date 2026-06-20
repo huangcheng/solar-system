@@ -28,4 +28,5 @@ private:
     QString pathFor(Slot slot) const;   // first existing file across m_dirs
     static QString fileName(Slot slot);
     static QImage fallback(Slot slot);
+    static QImage scaledToTier(QImage img, int tierMaxSize);
 };

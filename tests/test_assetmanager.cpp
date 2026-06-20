@@ -1,4 +1,6 @@
 #include <QtTest/QtTest>
+#include <QTemporaryDir>
+#include <QPainter>
 #include "celestial/AssetManager.h"
 
 class TestAssetManager : public QObject {
@@ -9,17 +11,28 @@ private slots:
 };
 
 void TestAssetManager::filenameLookupResolvesExistingFile() {
-    // earth day.jpg ships in the repo's textures/ dir (../textures from build dir)
-    AssetManager am;
-    QImage img = am.image(QStringLiteral("day.jpg"), 4096);
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    // Write a known 100x50 magenta PNG into the dir.
+    QImage src(100, 50, QImage::Format_RGB32);
+    src.fill(QColor(255, 0, 255));
+    QVERIFY(src.save(tmp.path() + "/known.png"));
+
+    AssetManager am(tmp.path());            // explicit dir ctor
+    QImage img = am.image(QStringLiteral("known.png"), 4096);
     QVERIFY(!img.isNull());
-    QVERIFY(img.width() > 0);
+    QCOMPARE(img.width(), 100);             // real decode, not fallback (fallback is 512)
+    QCOMPARE(img.height(), 50);
+    QCOMPARE(img.pixel(0, 0), QColor(255, 0, 255).rgb());
 }
 
 void TestAssetManager::filenameLookupFallsBackWhenMissing() {
-    AssetManager am;
-    QImage img = am.image(QStringLiteral("does_not_exist_xyz.jpg"), 4096);
-    QVERIFY(!img.isNull());  // procedural fallback, not null
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    AssetManager am(tmp.path());            // empty dir
+    QImage img = am.image(QStringLiteral("nope.jpg"), 4096);
+    QVERIFY(!img.isNull());
+    QCOMPARE(img.width(), 512);             // fallback size
 }
 
 QTEST_MAIN(TestAssetManager)

@@ -53,12 +53,7 @@ QImage AssetManager::fallback(Slot slot) {
 QImage AssetManager::image(Slot slot, int tierMaxSize) const {
     QImage img = hasFile(slot) ? QImage(pathFor(slot)) : fallback(slot);
     if (img.isNull()) img = fallback(slot);
-    const int w = img.width(), h = img.height();
-    if (w > tierMaxSize) {
-        const int nh = int(qint64(h) * tierMaxSize / qMax(1, w));
-        img = img.scaled(tierMaxSize, nh, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    }
-    return img;
+    return scaledToTier(img, tierMaxSize);
 }
 
 bool AssetManager::hasFile(const QString& fileName) const {
@@ -73,18 +68,20 @@ QImage AssetManager::image(const QString& fileName, int tierMaxSize) const {
         const QString p = d + QLatin1Char('/') + fileName;
         if (QFile::exists(p)) {
             QImage img(p);
-            if (!img.isNull()) {
-                const int w = img.width(), h = img.height();
-                if (w > tierMaxSize) {
-                    const int nh = int(qint64(h) * tierMaxSize / qMax(1, w));
-                    img = img.scaled(tierMaxSize, nh, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-                }
-                return img;
-            }
+            if (!img.isNull()) return scaledToTier(img, tierMaxSize);
         }
     }
     // Procedural fallback: neutral gray so the body is visible, not black.
     QImage fb(512, 256, QImage::Format_RGB32);
     fb.fill(QColor(120, 120, 120));
     return fb;
+}
+
+QImage AssetManager::scaledToTier(QImage img, int tierMaxSize) {
+    const int w = img.width(), h = img.height();
+    if (w > tierMaxSize) {
+        const int nh = int(qint64(h) * tierMaxSize / qMax(1, w));
+        img = img.scaled(tierMaxSize, nh, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
+    return img;
 }
