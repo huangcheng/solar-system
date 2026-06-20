@@ -21,6 +21,7 @@ public:
     double homeLatitude() const;  void setHomeLatitude(double v);
     double homeLongitude() const; void setHomeLongitude(double v);
     bool showGrid() const;        void setShowGrid(bool v);
+    bool showHomeMarker() const;  void setShowHomeMarker(bool v);
     QString nightMode() const;    void setNightMode(const QString &v);
     QString language() const;     void setLanguage(const QString &v);
     bool alwaysOnTop() const;     void setAlwaysOnTop(bool v);
@@ -37,6 +38,7 @@ private:
     double m_cloudSpeed = 1.0;
     bool m_locationOptIn = false;
     bool m_showGrid = false;
+    bool m_showHomeMarker = false;
     bool m_alwaysOnTop = true;
     QString m_nightMode = QStringLiteral("texture");
     QString m_language  = QStringLiteral("en");

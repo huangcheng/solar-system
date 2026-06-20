@@ -8,25 +8,38 @@ SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
     QPixmap pm(16, 16);
     pm.fill(QColor(40, 96, 200));
     setIcon(QIcon(pm));
+    buildMenu();
+    setContextMenu(m_menu);
+    show();
+}
 
-    auto *menu = new QMenu;
-    menu->addAction(tr("Hide/Show"), this, &SystemTray::toggleVisibility);
-    menu->addAction(tr("Reset View"), this, &SystemTray::resetView);
-    menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
-    menu->addSeparator();
-    menu->addAction(tr("Settings..."), this, &SystemTray::openSettings);
-    menu->addSeparator();
-    menu->addAction(tr("About"), this, [] {
+void SystemTray::buildMenu() {
+    // (Re)build the whole menu from translated strings. clear() drops the old
+    // actions and their connections so re-calling on a language change neither
+    // duplicates items nor leaves dangling signal wiring.
+    if (!m_menu) {
+        m_menu = new QMenu;
+    } else {
+        m_menu->clear();
+    }
+    m_menu->addAction(tr("Hide/Show"), this, &SystemTray::toggleVisibility);
+    m_menu->addAction(tr("Reset View"), this, &SystemTray::resetView);
+    m_menu->addAction(tr("Center on Me"), this, &SystemTray::centerOnMe);
+    m_menu->addSeparator();
+    m_menu->addAction(tr("Settings..."), this, &SystemTray::openSettings);
+    m_menu->addSeparator();
+    m_menu->addAction(tr("About"), this, [] {
         // v1: About is a tray message. A real dialog can replace this later.
     });
-    auto *quit = menu->addAction(tr("Quit"));
+    auto *quit = m_menu->addAction(tr("Quit"));
     connect(quit, &QAction::triggered, qApp, &QApplication::quit);
+}
 
-    setContextMenu(menu);
-    show();
+void SystemTray::retranslateMenu() {
+    buildMenu();
+    setContextMenu(m_menu);
 }
 
 void SystemTray::setSolarTooltip(const QString &text) {
     setToolTip(text);
 }
-

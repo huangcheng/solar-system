@@ -35,6 +35,8 @@ double ConfigManager::homeLatitude() const { return m_homeLat; }
 void ConfigManager::setHomeLatitude(double v) { m_homeLat = v; }
 bool ConfigManager::showGrid() const { return m_showGrid; }
 void ConfigManager::setShowGrid(bool v) { m_showGrid = v; }
+bool ConfigManager::showHomeMarker() const { return m_showHomeMarker; }
+void ConfigManager::setShowHomeMarker(bool v) { m_showHomeMarker = v; }
 QString ConfigManager::nightMode() const { return m_nightMode; }
 void ConfigManager::setNightMode(const QString &v) { m_nightMode = (v == QStringLiteral("texture") ? v : QStringLiteral("simple")); }
 QString ConfigManager::language() const { return m_language; }
@@ -61,6 +63,7 @@ void ConfigManager::load() {
     m_homeLat = obj.value("homeLatitude").toDouble(m_homeLat);
     m_homeLon = obj.value("homeLongitude").toDouble(m_homeLon);
     m_showGrid = obj.value("showGrid").toBool(m_showGrid);
+    m_showHomeMarker = obj.value("showHomeMarker").toBool(m_showHomeMarker);
     m_nightMode = obj.value("nightMode").toString(m_nightMode) == QStringLiteral("texture")
                       ? QStringLiteral("texture") : QStringLiteral("simple");
     m_language  = obj.value("language").toString(m_language) == QStringLiteral("zh_CN")
@@ -79,6 +82,7 @@ void ConfigManager::save() {
     o["homeLatitude"] = m_homeLat;
     o["homeLongitude"] = m_homeLon;
     o["showGrid"] = m_showGrid;
+    o["showHomeMarker"] = m_showHomeMarker;
     o["nightMode"] = m_nightMode;
     o["language"]  = m_language;
     o["alwaysOnTop"] = m_alwaysOnTop;

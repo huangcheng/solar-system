@@ -41,12 +41,11 @@ void CelestialWidget::applyOptionsFromConfig() {
     opts.showGrid = m_config->showGrid();
     opts.useNightTexture = (m_config->nightMode() == QStringLiteral("texture"));
     opts.rotationSpeedRatio = m_config->rotationSpeed();
-    opts.homeLat = m_config->homeLatitude();
-    opts.homeLon = m_config->homeLongitude();
-    // The home beacon is only meaningful once a real location fix has arrived,
-    // and only if the user opted into location. Showing it at the default
-    // (0,0) on a fresh install puts a pulsing dot in the Gulf of Guinea.
-    opts.hasHome = m_config->locationOptIn() && m_hasLocationFix;
+    opts.homeLat = m_config ? m_config->homeLatitude() : 0.0;
+    opts.homeLon = m_config ? m_config->homeLongitude() : 0.0;
+    // The home beacon is driven by the user's "Show home marker" toggle (manual
+    // lat/lon from Settings), independent of whether geolocation is available.
+    opts.hasHome = m_config && m_config->showHomeMarker();
     m_body.setOptions(opts);
     setWindowFlag(Qt::WindowStaysOnTopHint, m_config->alwaysOnTop());
 }

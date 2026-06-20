@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&tray, &SystemTray::toggleVisibility, &widget,
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });
     QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &widget,
-        [&widget, &config, &translator, &app, &time, &location]() {
+        [&widget, &config, &translator, &app, &time, &tray]() {
             // applyOptionsFromConfig() toggles Qt::WindowStaysOnTopHint; changing
             // window flags hides a visible widget, so capture and re-show it.
             const bool wasVisible = widget.isVisible();
@@ -105,7 +105,6 @@ int main(int argc, char *argv[]) {
             widget.setViewMode(config.viewMode() == QStringLiteral("map")
                                ? CelestialWidget::ViewMode::FlatMap
                                : CelestialWidget::ViewMode::Globe);
-            if (config.locationOptIn()) location.start(); else location.stop();
             if (wasVisible) widget.show();
             // Spin speed may have changed: re-evaluate the adaptive baseline.
             time.setAnimating(config.rotationSpeed() > 1);
@@ -114,10 +113,12 @@ int main(int argc, char *argv[]) {
                 if (translator.load(QStringLiteral(":/i18n/globe_zh_CN.qm")))
                     app.installTranslator(&translator);
             }
+            // Rebuild the tray menu so its labels pick up the new language.
+            tray.retranslateMenu();
             widget.update();
         });
     QObject::connect(&tray, &SystemTray::openSettings, &widget,
-        [&settingsDialog]() { settingsDialog.exec(); });
+        [&settingsDialog]() { settingsDialog.retranslateUi(); settingsDialog.exec(); });
     QObject::connect(&tray, &SystemTray::resetView, &widget, [&widget, &camera] {
         if (widget.viewMode() != CelestialWidget::ViewMode::Globe) return;
         camera.reset();
