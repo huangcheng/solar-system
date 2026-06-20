@@ -38,6 +38,8 @@ qt_add_library(celestial STATIC
     src/celestial/CelestialBody.cpp
     src/celestial/CelestialWidget.h
     src/celestial/CelestialWidget.cpp
+    src/celestial/TerminatorModel.h
+    src/celestial/TerminatorModel.cpp
 )
 
 target_include_directories(celestial PUBLIC
