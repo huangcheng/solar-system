@@ -32,6 +32,23 @@ void LocationProvider::stop() {
     m_src = nullptr;        // lets start() recreate the source on re-enable
 }
 
+void LocationProvider::requestOnceSystem(int timeoutMs) {
+    if (!m_src) {
+        auto *src = QGeoPositionInfoSource::createDefaultSource(this);
+        if (!src) { emit locationChanged(m_lat, m_lon); return; }  // no backend; no fix
+        m_src = src;
+        connect(src, &QGeoPositionInfoSource::positionUpdated, this,
+            [this](const QGeoPositionInfo &info) {
+                if (!info.isValid()) return;
+                const QGeoCoordinate c = info.coordinate();
+                if (!c.isValid()) return;
+                if (m_perm != Granted) setPermission(Granted);
+                setCoordinates(c.latitude(), c.longitude());
+            });
+    }
+    m_src->requestUpdate(timeoutMs);   // one-shot; positionUpdated fires once if a fix is available
+}
+
 void LocationProvider::setPermission(Permission p) {
     if (m_perm == p) return;
     m_perm = p;

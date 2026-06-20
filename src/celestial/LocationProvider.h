@@ -23,6 +23,12 @@ public:
     // when not started; lets a subsequent start() recreate the source.
     void stop();
 
+    // One-shot system-location request (single fix, not continuous updates).
+    // Used by the startup auto-detect and the Settings "Detect -> System" button.
+    // Lazily creates the positioning source on first use; if no backend exists
+    // it re-emits the last known coordinates and returns without a fix.
+    void requestOnceSystem(int timeoutMs = 8000);
+
     bool isEnabled() const;
     double latitude() const { return m_lat; }
     double longitude() const { return m_lon; }
