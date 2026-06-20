@@ -32,7 +32,7 @@ uniform float uUseNightTexture; // 1 = use night texture, 0 = simple dim day map
 
 const float kReliefStrength = 3.8;   // how strongly the normal map tilts the normal
 const float kReliefShade    = 2.6;   // how much a slope darkens/brightens the day map
-const float kGlint          = 0.30;  // ocean sun-glint intensity (low = not glassy)
+const float kGlint          = 0.0;    // ocean sun-glint disabled (was 0.30; set >0 to restore the sun spot)
 
 const float kGridStepRad = 3.14159265 / 12.0;     // 15 degrees
 const float kGridLinePx  = 1.2;                   // ~1 px anti-aliased line
