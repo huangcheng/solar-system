@@ -74,6 +74,14 @@ int runBodyApp(int argc, char *argv[], const BodyConfig& config) {
     widget.move(cm.windowX(), cm.windowY());
     widget.resize(cm.diameter(), cm.diameter());
     widget.applyOptionsFromConfig();
+    // No "you are here" marker on non-Earth bodies — the home beacon is
+    // meaningless on alien worlds. (applyOptionsFromConfig sets hasHome=true
+    // unconditionally because Earth always shows its configured home.)
+    {
+        CelestialRenderOptions opts = widget.body().options();
+        opts.hasHome = false;
+        widget.body().setOptions(opts);
+    }
 
     TimeController time(&sun);
     time.setTarget(&widget);
