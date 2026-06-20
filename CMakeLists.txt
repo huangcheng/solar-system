@@ -134,6 +134,10 @@ install(FILES src/celestial/data/ip-services.json DESTINATION ${CMAKE_INSTALL_BI
 qt_generate_deploy_app_script(TARGET earth OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 install(SCRIPT ${deploy_script})
 
+# Ship the bundled textures next to the installed binary. AssetManager searches
+# applicationDirPath()/textures, ../textures, and the user-local cache.
+install(DIRECTORY textures/ DESTINATION textures)
+
 # Tests
 enable_testing()
 add_subdirectory(tests)
