@@ -115,6 +115,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&tray, &SystemTray::openSettings, &widget,
         [&settingsDialog]() { settingsDialog.exec(); });
     QObject::connect(&tray, &SystemTray::resetView, &widget, [&widget, &camera] {
+        if (widget.viewMode() != CelestialWidget::ViewMode::Globe) return;
         camera.reset();
         CelestialRenderOptions opts = widget.body().options();
         opts.useCenterLon = false;
@@ -122,6 +123,7 @@ int main(int argc, char *argv[]) {
         widget.update();
     });
     QObject::connect(&tray, &SystemTray::centerOnMe, &widget, [&widget, &camera, &config] {
+        if (widget.viewMode() != CelestialWidget::ViewMode::Globe) return;
         camera.reset();
         CelestialRenderOptions opts = widget.body().options();
         opts.centerLon = config.homeLongitude();
@@ -129,6 +131,20 @@ int main(int argc, char *argv[]) {
         widget.body().setOptions(opts);
         widget.update();
     });
+
+    // --- Flat map mode toggle (globe <-> equirectangular day/night map) ---
+    QObject::connect(&tray, &SystemTray::flatMapToggled, &widget,
+        [&widget, &config](bool flat) {
+            widget.setViewMode(flat ? CelestialWidget::ViewMode::FlatMap
+                                    : CelestialWidget::ViewMode::Globe);
+            config.setViewMode(flat ? QStringLiteral("map") : QStringLiteral("globe"));
+            config.save();
+        });
+    // Apply the persisted mode on startup (checkbox + widget).
+    const bool startFlat = (config.viewMode() == QStringLiteral("map"));
+    tray.setFlatMapChecked(startFlat);
+    if (startFlat)
+        widget.setViewMode(CelestialWidget::ViewMode::FlatMap);
 
     auto refreshTooltip = [&sun, &tray] {
         sun.setUtc(QDateTime::currentDateTimeUtc());
