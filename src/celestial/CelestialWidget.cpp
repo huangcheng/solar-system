@@ -71,14 +71,15 @@ void CelestialWidget::setViewMode(ViewMode m) {
     const int w = width();
     const QPoint c = geometry().center();
     if (m == ViewMode::FlatMap) {
-        const int newH = qMax(120, w / 2);          // 2:1 keeping the width
-        resize(w, newH);
-        move(c - QPoint(w / 2, newH / 2));
+        const int newW = qMax(width(), 600);         // readable flat-map default (600x300)
+        const int newH = qMax(120, newW / 2);
+        resize(newW, newH);
+        move(c - QPoint(newW / 2, newH / 2));
         clearMask();
     } else {
-        resize(w, w);                                // square again
+        // returning to globe: square at the current width
+        resize(w, w);
         move(c - QPoint(w / 2, w / 2));
-        // elliptical mask re-applied by resizeEvent()
     }
     update();
 }

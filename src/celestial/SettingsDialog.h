@@ -29,6 +29,8 @@ private:
     QComboBox *m_languageCombo = nullptr;
     QSlider *m_rotationSlider = nullptr;
     QLabel *m_rotationValueLabel = nullptr;
+    QComboBox *m_viewModeCombo = nullptr;
+    QCheckBox *m_locationCheck = nullptr;   // location opt-in (home marker)
 
     void setupUi();
 };

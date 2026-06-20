@@ -29,6 +29,12 @@ void SettingsDialog::setupUi() {
     m_languageCombo->setCurrentIndex(langIndex >= 0 ? langIndex : 0);
     form->addRow(tr("Language:"), m_languageCombo);
 
+    m_viewModeCombo = new QComboBox;
+    m_viewModeCombo->addItem(tr("Globe (3D)"), QStringLiteral("globe"));
+    m_viewModeCombo->addItem(tr("Flat Map"), QStringLiteral("map"));
+    m_viewModeCombo->setCurrentIndex(qMax(0, m_viewModeCombo->findData(m_config->viewMode())));
+    form->addRow(tr("View Mode:"), m_viewModeCombo);
+
     m_gridCheck = new QCheckBox(tr("Show Grid"));
     m_gridCheck->setChecked(m_config->showGrid());
     form->addRow(m_gridCheck);
@@ -36,6 +42,10 @@ void SettingsDialog::setupUi() {
     m_alwaysOnTopCheck = new QCheckBox(tr("Always on Top"));
     m_alwaysOnTopCheck->setChecked(m_config->alwaysOnTop());
     form->addRow(m_alwaysOnTopCheck);
+
+    m_locationCheck = new QCheckBox(tr("Use my location (show home marker)"));
+    m_locationCheck->setChecked(m_config->locationOptIn());
+    form->addRow(m_locationCheck);
 
     auto *nightGroup = new QGroupBox(tr("Night Mode"));
     auto *nightLayout = new QVBoxLayout(nightGroup);
@@ -89,6 +99,8 @@ void SettingsDialog::accept() {
     m_config->setRotationSpeed(m_rotationSlider->value());
     m_config->setNightMode(m_textureNightRadio->isChecked()
                                ? QStringLiteral("texture") : QStringLiteral("simple"));
+    m_config->setViewMode(m_viewModeCombo->currentData().toString());
+    m_config->setLocationOptIn(m_locationCheck->isChecked());
     m_config->save();
     emit settingsChanged();
     QDialog::accept();

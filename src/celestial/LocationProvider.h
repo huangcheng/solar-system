@@ -19,6 +19,9 @@ public:
     // Start Qt Positioning (default source). Triggers the OS location-permission
     // prompt; on the first valid fix it sets permission=Granted + coordinates.
     void start();
+    // Stop receiving updates and release the positioning source. Safe to call
+    // when not started; lets a subsequent start() recreate the source.
+    void stop();
 
     bool isEnabled() const;
     double latitude() const { return m_lat; }

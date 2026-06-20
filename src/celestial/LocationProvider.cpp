@@ -25,6 +25,13 @@ void LocationProvider::start() {
     src->startUpdates();
 }
 
+void LocationProvider::stop() {
+    if (!m_src) return;
+    m_src->stopUpdates();
+    m_src->deleteLater();   // async-delete: safe even if called from a source signal
+    m_src = nullptr;        // lets start() recreate the source on re-enable
+}
+
 void LocationProvider::setPermission(Permission p) {
     if (m_perm == p) return;
     m_perm = p;

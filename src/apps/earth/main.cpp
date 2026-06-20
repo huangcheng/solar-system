@@ -97,11 +97,15 @@ int main(int argc, char *argv[]) {
     QObject::connect(&tray, &SystemTray::toggleVisibility, &widget,
         [&widget] { widget.isVisible() ? widget.hide() : widget.show(); });
     QObject::connect(&settingsDialog, &SettingsDialog::settingsChanged, &widget,
-        [&widget, &config, &translator, &app, &time]() {
+        [&widget, &config, &translator, &app, &time, &location]() {
             // applyOptionsFromConfig() toggles Qt::WindowStaysOnTopHint; changing
             // window flags hides a visible widget, so capture and re-show it.
             const bool wasVisible = widget.isVisible();
             widget.applyOptionsFromConfig();
+            widget.setViewMode(config.viewMode() == QStringLiteral("map")
+                               ? CelestialWidget::ViewMode::FlatMap
+                               : CelestialWidget::ViewMode::Globe);
+            if (config.locationOptIn()) location.start(); else location.stop();
             if (wasVisible) widget.show();
             // Spin speed may have changed: re-evaluate the adaptive baseline.
             time.setAnimating(config.rotationSpeed() > 1);
@@ -132,19 +136,10 @@ int main(int argc, char *argv[]) {
         widget.update();
     });
 
-    // --- Flat map mode toggle (globe <-> equirectangular day/night map) ---
-    QObject::connect(&tray, &SystemTray::flatMapToggled, &widget,
-        [&widget, &config](bool flat) {
-            widget.setViewMode(flat ? CelestialWidget::ViewMode::FlatMap
-                                    : CelestialWidget::ViewMode::Globe);
-            config.setViewMode(flat ? QStringLiteral("map") : QStringLiteral("globe"));
-            config.save();
-        });
-    // Apply the persisted mode on startup (checkbox + widget).
-    const bool startFlat = (config.viewMode() == QStringLiteral("map"));
-    tray.setFlatMapChecked(startFlat);
-    if (startFlat)
-        widget.setViewMode(CelestialWidget::ViewMode::FlatMap);
+    // Apply the persisted view mode on startup (mode is toggled via Settings).
+    widget.setViewMode(config.viewMode() == QStringLiteral("map")
+                       ? CelestialWidget::ViewMode::FlatMap
+                       : CelestialWidget::ViewMode::Globe);
 
     auto refreshTooltip = [&sun, &tray] {
         sun.setUtc(QDateTime::currentDateTimeUtc());
