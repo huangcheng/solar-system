@@ -9,6 +9,7 @@ public:
     Q_ENUM(QualityTier)
 
     explicit ConfigManager(const QString& bodyId = QStringLiteral("earth"),
+                           const QString& baseDir = QString(),
                            QObject *parent = nullptr);
 
     // Derives the config file path for a body. Earth keeps the legacy
@@ -38,12 +39,6 @@ public:
     void save();
 
 private:
-    // Test-only constructor: uses an explicit directory (appends "/config.json")
-    // without QStandardPaths derivation or directory creation, so load/save
-    // round-trip tests stay hermetic against a QTemporaryDir.
-    ConfigManager(const QString& dir, bool /*testing*/, QObject *parent = nullptr);
-    friend class TestConfigManager;
-
     QString m_path;
     int m_x = 100, m_y = 100, m_diameter = 220, m_fpsCap = 60;
     int m_rotationSpeed = 2880;  // globe-toy spin: sun fixed at real position, Earth spins under it (2880x = ~1 turn/30s)

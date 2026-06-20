@@ -6,7 +6,7 @@ class TestConfigManager : public QObject { Q_OBJECT
 private slots:
     void savesAndLoadsValues() {
         QTemporaryDir dir;
-        ConfigManager c(dir.path(), true);
+        ConfigManager c(QStringLiteral("earth"), dir.path());
         c.setWindowX(123); c.setWindowY(456);
         c.setDiameter(420); c.setQualityTier(ConfigManager::HD);
         c.setFpsCap(30); c.setLocationOptIn(true); c.setHomeLongitude(116.4);
@@ -15,7 +15,7 @@ private slots:
         c.setLanguage(QStringLiteral("zh_CN"));
         c.save();
 
-        ConfigManager c2(dir.path(), true);
+        ConfigManager c2(QStringLiteral("earth"), dir.path());
         QCOMPARE(c2.windowX(), 123);
         QCOMPARE(c2.windowY(), 456);
         QCOMPARE(c2.diameter(), 420);
@@ -29,7 +29,7 @@ private slots:
     }
     void clampsDiameter() {
         QTemporaryDir dir;
-        ConfigManager c(dir.path(), true);
+        ConfigManager c(QStringLiteral("earth"), dir.path());
         c.setDiameter(10);
         QCOMPARE(c.diameter(), 160);
         c.setDiameter(100000);

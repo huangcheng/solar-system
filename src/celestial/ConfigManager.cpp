@@ -16,15 +16,17 @@ QString ConfigManager::pathForBody(const QString& bodyId) {
                                                : (base + "/" + bodyId + "/config.json");
 }
 
-ConfigManager::ConfigManager(const QString& bodyId, QObject *parent) : QObject(parent) {
-    m_path = pathForBody(bodyId);
-    // Ensure the parent dir exists (load() won't create it, but save() writes into it).
-    QDir().mkpath(QFileInfo(m_path).absolutePath());
-    load();
-}
-
-ConfigManager::ConfigManager(const QString& dir, bool /*testing*/, QObject *parent)
-    : QObject(parent), m_path(dir + "/config.json") {
+ConfigManager::ConfigManager(const QString& bodyId, const QString& baseDir, QObject *parent)
+    : QObject(parent) {
+    if (baseDir.isEmpty()) {
+        m_path = pathForBody(bodyId);
+    } else {
+        // Explicit baseDir override (portable installs, --config-dir, hermetic
+        // tests). Mirrors pathForBody's earth rule: earth stays at the top
+        // level (<baseDir>/config.json), other bodies get a per-body subdir.
+        const QString mid = (bodyId == QStringLiteral("earth")) ? QString() : bodyId + "/";
+        m_path = baseDir + "/" + mid + "config.json";
+    }
     load();
 }
 
@@ -91,6 +93,8 @@ void ConfigManager::save() {
     o["nightMode"] = m_nightMode;
     o["language"]  = m_language;
     o["alwaysOnTop"] = m_alwaysOnTop;
+    // Ensure the parent dir exists before writing (read-only profiles can construct freely).
+    QDir().mkpath(QFileInfo(m_path).absolutePath());
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))
         f.write(QJsonDocument(o).toJson(QJsonDocument::Indented));
