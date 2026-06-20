@@ -36,6 +36,7 @@ private slots:
         QCOMPARE(c.diameter(), 1024);
     }
     void testViewModeRoundTrip();
+    void testAutoDetectOnStart();
 };
 
 void TestConfigManager::testViewModeRoundTrip() {
@@ -56,6 +57,29 @@ void TestConfigManager::testViewModeRoundTrip() {
     // invalid value clamps to globe
     cm2.setViewMode(QStringLiteral("nonsense"));
     QCOMPARE(cm2.viewMode(), QStringLiteral("globe"));
+}
+
+void TestConfigManager::testAutoDetectOnStart() {
+    // default: false
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    ConfigManager cm(dir.path());
+    QCOMPARE(cm.autoDetectOnStart(), false);
+
+    // set true + round-trip through save/new-load
+    cm.setAutoDetectOnStart(true);
+    QVERIFY(cm.autoDetectOnStart());
+    cm.save();
+    {
+        ConfigManager loaded(dir.path());
+        QVERIFY(loaded.autoDetectOnStart());   // persisted
+    }
+
+    // invalid/missing value stays false (fresh dir, no key on disk)
+    QTemporaryDir dir2;
+    QVERIFY(dir2.isValid());
+    ConfigManager cm2(dir2.path());
+    QVERIFY(!cm2.autoDetectOnStart());
 }
 
 QTEST_GUILESS_MAIN(TestConfigManager)

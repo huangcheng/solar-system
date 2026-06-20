@@ -26,6 +26,7 @@ public:
     QString language() const;     void setLanguage(const QString &v);
     bool alwaysOnTop() const;     void setAlwaysOnTop(bool v);
     QString viewMode() const;     void setViewMode(const QString &v);
+    bool autoDetectOnStart() const; void setAutoDetectOnStart(bool v);
 
     void load();
     void save();
@@ -44,5 +45,6 @@ private:
     QString m_language  = QStringLiteral("en");
     QString m_viewMode  = QStringLiteral("globe");  // "globe" (3D) or "map" (flat equirectangular)
     double m_homeLat = 0.0, m_homeLon = 0.0;
+    bool m_autoDetectOnStart = false;
     static int clampDiameter(int v);
 };

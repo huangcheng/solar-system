@@ -47,6 +47,8 @@ QString ConfigManager::viewMode() const { return m_viewMode; }
 void ConfigManager::setViewMode(const QString &v) {
     m_viewMode = (v == QStringLiteral("map")) ? QStringLiteral("map") : QStringLiteral("globe");
 }
+bool ConfigManager::autoDetectOnStart() const { return m_autoDetectOnStart; }
+void ConfigManager::setAutoDetectOnStart(bool v) { m_autoDetectOnStart = v; }
 
 void ConfigManager::load() {
     QFile f(m_path);
@@ -69,6 +71,7 @@ void ConfigManager::load() {
     m_language  = obj.value("language").toString(m_language) == QStringLiteral("zh_CN")
                       ? QStringLiteral("zh_CN") : QStringLiteral("en");
     m_alwaysOnTop = obj.value("alwaysOnTop").toBool(m_alwaysOnTop);
+    m_autoDetectOnStart = obj.value("autoDetectOnStart").toBool(m_autoDetectOnStart);
     m_viewMode = (obj.value("viewMode").toString(m_viewMode) == QStringLiteral("map"))
                      ? QStringLiteral("map") : QStringLiteral("globe");
 }
@@ -86,6 +89,7 @@ void ConfigManager::save() {
     o["nightMode"] = m_nightMode;
     o["language"]  = m_language;
     o["alwaysOnTop"] = m_alwaysOnTop;
+    o["autoDetectOnStart"] = m_autoDetectOnStart;
     o["viewMode"] = m_viewMode;
     QFile f(m_path);
     if (f.open(QIODevice::WriteOnly))
