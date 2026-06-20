@@ -1,0 +1,22 @@
+World cities data bundled in cities.json
+==========================================
+
+Source:      SimpleMaps "Basic World Cities Database" (free tier)
+             https://simplemaps.com/data/world-cities
+Version:     basicv1.75
+License:     Creative Commons Attribution 4.0 International (CC BY 4.0)
+             https://creativecommons.org/licenses/by/4.0/
+
+Per the SimpleMaps license, the Basic World Cities Database is free of charge
+and licensed under CC BY 4.0, which requires attribution. This bundled copy is
+a *derivative* of that database: only cities with population >= 500000 are
+retained, exact "City, Country" collisions are deduplicated (keeping the larger
+population), and only the fields {name, country, lat, lon} are kept.
+
+Required attribution (CC BY 4.0):
+  Contains data from SimpleMaps (https://simplemaps.com/data/world-cities),
+  licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+
+This attribution notice must accompany any redistribution of cities.json.
+The upstream SimpleMaps database and its trademarks remain the property of
+Pareto Software, LLC.
