@@ -1,20 +1,25 @@
 #include "SettingsDialog.h"
 #include "ConfigManager.h"
+#include "CityDatabase.h"
+#include "LocationProvider.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
 #include <QCheckBox>
 #include <QRadioButton>
 #include <QComboBox>
-#include <QDoubleSpinBox>
+#include <QCompleter>
+#include <QPushButton>
+#include <QMenu>
+#include <QAction>
 #include <QGroupBox>
 #include <QLabel>
 #include <QWidget>
 #include <QDialogButtonBox>
 #include <QSlider>
 
-SettingsDialog::SettingsDialog(ConfigManager *config, QWidget *parent)
-    : QDialog(parent), m_config(config) {
+SettingsDialog::SettingsDialog(ConfigManager *config, QWidget *parent, LocationProvider *location)
+    : QDialog(parent), m_config(config), m_location(location) {
     setupUi();
 }
 
@@ -50,28 +55,61 @@ void SettingsDialog::setupUi() {
     m_markerCheck->setChecked(m_config->showHomeMarker());
     form->addRow(m_markerCheck);
 
-    // Home marker location: manual latitude / longitude (independent of geolocation).
-    auto *homeRow = new QWidget;
-    auto *homeLay = new QHBoxLayout(homeRow);
-    homeLay->setContentsMargins(0, 0, 0, 0);
-    m_latSpin = new QDoubleSpinBox;
-    m_latSpin->setRange(-90.0, 90.0);
-    m_latSpin->setDecimals(4);
-    m_latSpin->setSuffix(tr("\xc2\xb0"));   // degree sign
-    m_latSpin->setValue(m_config->homeLatitude());
-    m_lonSpin = new QDoubleSpinBox;
-    m_lonSpin->setRange(-180.0, 180.0);
-    m_lonSpin->setDecimals(4);
-    m_lonSpin->setSuffix(tr("\xc2\xb0"));
-    m_lonSpin->setValue(m_config->homeLongitude());
-    homeLay->addWidget(m_latSpin);
-    homeLay->addWidget(m_lonSpin);
-    m_homeLocLabel = new QLabel(tr("Home marker location:"));
-    form->addRow(m_homeLocLabel, homeRow);
+    // --- Home location: city selector + detect button + auto-start + coords ---
 
-    m_autoLocCheck = new QCheckBox(tr("Auto-detect my location"));
-    m_autoLocCheck->setChecked(m_config->locationOptIn());
-    form->addRow(m_autoLocCheck);
+    m_cityCombo = new QComboBox;
+    m_cityCombo->setEditable(true);
+    m_cityCombo->setInsertPolicy(QComboBox::NoInsert);   // never keep typed garbage
+    {
+        const auto &cities = CityDatabase::instance().all();
+        QStringList displays;
+        displays.reserve(cities.size());
+        for (const CityEntry &c : cities)
+            displays << c.display();
+        m_cityCombo->addItems(displays);   // populated before the activated signal is wired
+    }
+    m_cityCompleter = new QCompleter(m_cityCombo->model(), this);   // share the combo model
+    m_cityCompleter->setCaseSensitivity(Qt::CaseInsensitive);
+    m_cityCompleter->setFilterMode(Qt::MatchContains);
+    m_cityCombo->setCompleter(m_cityCompleter);
+    m_homeCityLabel = new QLabel(tr("Home city:"));
+    form->addRow(m_homeCityLabel, m_cityCombo);
+
+    m_detectBtn = new QPushButton(tr("Detect Location"));
+    m_detectMenu = new QMenu(this);
+    m_detectMenu->addAction(tr("System (GPS/WiFi)"), [this]() {
+        if (m_location) m_location->requestOnceSystem();
+    });
+    m_detectMenu->addAction(tr("IP (approximate)"), [this]() {
+        m_ipLocator.request();
+    });
+    m_detectBtn->setMenu(m_detectMenu);
+    form->addRow(QString(), m_detectBtn);
+
+    m_autoStartCheck = new QCheckBox(tr("Auto-detect on startup"));
+    m_autoStartCheck->setChecked(m_config->autoDetectOnStart());
+    form->addRow(m_autoStartCheck);
+
+    m_coordLabel = new QLabel;
+    refreshCoordLabel();
+    form->addRow(QString(), m_coordLabel);
+
+    // Wire city selection AFTER populate so the initial addItems don't fire.
+    connect(m_cityCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int) {
+        const auto c = CityDatabase::instance().findByDisplay(m_cityCombo->currentText());
+        if (c) onLocationFound(c->lat, c->lon, c->name);
+    });
+    connect(m_cityCompleter, QOverload<const QString &>::of(&QCompleter::activated),
+            this, [this](const QString &text) {
+        const auto c = CityDatabase::instance().findByDisplay(text);
+        if (c) onLocationFound(c->lat, c->lon, c->name);
+    });
+
+    // Live location detection -> update config + globe marker.
+    if (m_location)
+        connect(m_location, &LocationProvider::locationChanged, this,
+                [this](double lat, double lon) { onLocationFound(lat, lon, QString()); });
+    connect(&m_ipLocator, &IpLocator::located, this, &SettingsDialog::onLocationFound);
 
     m_nightGroup = new QGroupBox(tr("Night Mode"));
     auto *nightLayout = new QVBoxLayout(m_nightGroup);
@@ -121,15 +159,47 @@ void SettingsDialog::onRotationSlider(int value) {
     m_rotationValueLabel->setText(QStringLiteral("%1x (%2)").arg(value).arg(desc));
 }
 
+void SettingsDialog::refreshCoordLabel() {
+    const double lat = m_config ? m_config->homeLatitude() : 0.0;
+    const double lon = m_config ? m_config->homeLongitude() : 0.0;
+    // 0,0 is the config default => treat as "not set" (a real 0,0 fix is rare).
+    if (lat == 0.0 && lon == 0.0)
+        m_coordLabel->setText(tr("not set"));
+    else
+        m_coordLabel->setText(QStringLiteral("%1\xc2\xb0, %2\xc2\xb0")
+                                  .arg(lat, 0, 'f', 4).arg(lon, 0, 'f', 4));
+}
+
+void SettingsDialog::onLocationFound(double lat, double lon, const QString &city) {
+    if (!m_config) return;
+    m_config->setHomeLatitude(lat);
+    m_config->setHomeLongitude(lon);
+    m_config->setShowHomeMarker(true);   // a successful detect/show enables the marker
+    m_config->save();
+    refreshCoordLabel();
+    // Best-effort: reflect a matching city in the combo. The combo lists
+    // "City, Country" but the detect signals only carry a bare city name, so
+    // match by prefix (System detect passes an empty city => no change).
+    if (m_cityCombo && !city.isEmpty()) {
+        const int idx = m_cityCombo->findText(city, Qt::MatchStartsWith);
+        if (idx >= 0) m_cityCombo->setCurrentIndex(idx);
+    }
+    emit settingsChanged();   // live-update the globe/map marker
+}
+
 void SettingsDialog::retranslateUi() {
     setWindowTitle(tr("Settings"));
     m_gridCheck->setText(tr("Show Grid"));
     m_alwaysOnTopCheck->setText(tr("Always on Top"));
     m_markerCheck->setText(tr("Show home marker"));
-    m_autoLocCheck->setText(tr("Auto-detect my location"));
+    m_autoStartCheck->setText(tr("Auto-detect on startup"));
     m_langLabel->setText(tr("Language:"));
     m_viewModeLabel->setText(tr("View Mode:"));
-    m_homeLocLabel->setText(tr("Home marker location:"));
+    m_homeCityLabel->setText(tr("Home city:"));
+    m_detectBtn->setText(tr("Detect Location"));
+    const auto acts = m_detectMenu->actions();
+    if (acts.size() > 0) acts.at(0)->setText(tr("System (GPS/WiFi)"));
+    if (acts.size() > 1) acts.at(1)->setText(tr("IP (approximate)"));
     m_spinLabel->setText(tr("Spin Speed:"));
     m_simpleNightRadio->setText(tr("Simple Night"));
     m_textureNightRadio->setText(tr("Realistic Night (city lights)"));
@@ -138,9 +208,7 @@ void SettingsDialog::retranslateUi() {
     m_viewModeCombo->setItemText(0, tr("Globe (3D)"));
     m_viewModeCombo->setItemText(1, tr("Flat Map"));
     m_languageCombo->setItemText(0, tr("English"));
-    // Spinbox suffixes.
-    m_latSpin->setSuffix(tr("\xc2\xb0"));
-    m_lonSpin->setSuffix(tr("\xc2\xb0"));
+    refreshCoordLabel();   // retranslates the "not set" fallback
     // Spin-speed description uses tr() internally.
     onRotationSlider(m_rotationSlider->value());
 }
@@ -156,9 +224,7 @@ void SettingsDialog::accept() {
                                ? QStringLiteral("texture") : QStringLiteral("simple"));
     m_config->setViewMode(m_viewModeCombo->currentData().toString());
     m_config->setShowHomeMarker(m_markerCheck->isChecked());
-    m_config->setLocationOptIn(m_autoLocCheck->isChecked());
-    m_config->setHomeLatitude(m_latSpin->value());
-    m_config->setHomeLongitude(m_lonSpin->value());
+    m_config->setAutoDetectOnStart(m_autoStartCheck->isChecked());
     m_config->save();
     emit settingsChanged();
     QDialog::accept();
