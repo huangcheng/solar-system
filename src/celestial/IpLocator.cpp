@@ -9,6 +9,7 @@
 #include <QJsonValue>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QUrl>
 #include <QTimer>
 #include <cmath>
@@ -137,12 +138,16 @@ void IpLocator::tryNext()
                      QNetworkRequest::NoLessSafeRedirectPolicy);
     m_reply = m_nam.get(req);
 
-    // Arm a hard timeout: abort the in-flight reply (the resulting finished()
-    // signal drives the fallback via onReply, so there is a single advance path
-    // and no double-advance race between timeout and reply).
-    QTimer::singleShot(s.timeoutSec * 1000, this, [this]() {
-        if (m_reply)
-            m_reply->abort();
+    // Arm a hard timeout: abort only this specific reply. Capturing a
+    // QPointer (rather than m_reply) means that if this service's reply was
+    // already processed and tryNext() advanced to the next service, the stale
+    // timer fires on a null guard and aborts nothing — it can never abort a
+    // later service's reply. The resulting finished() signal drives the
+    // fallback via onReply, keeping a single advance path.
+    QPointer<QNetworkReply> guarded = m_reply;
+    QTimer::singleShot(s.timeoutSec * 1000, this, [guarded]() {
+        if (guarded)        // null if the reply was already finished/deleteLater'd
+            guarded->abort();
     });
 
     connect(m_reply, &QNetworkReply::finished, this, &IpLocator::onReply);
