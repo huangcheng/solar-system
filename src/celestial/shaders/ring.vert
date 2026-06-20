@@ -1,6 +1,6 @@
 #version 330 core
-// Ring annulus vertex stage (Saturn). The ring is a flat mesh lying in the XZ
-// plane. Geometry (built in a later task) supplies:
+// Ring annulus vertex stage (Saturn). The ring is a flat mesh lying in the XY
+// plane (the equatorial plane of this codebase's Z-up spheres). Geometry supplies:
 //   location 0: vec3 aPos  -- world/object position of the ring vertex
 //   location 1: vec2 aUv   -- (radial u, angular v) into the ring texture
 // It is transformed by a single uMVP (no lighting, no model decomposition is

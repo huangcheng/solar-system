@@ -10,7 +10,7 @@
 // Varying names mirror earth.vert exactly (vLocal / vWorld / vUV) so the Sun
 // shares the same sphere VAO. uMVP/uModel are unused here but declared in the
 // vertex stage; uViewPos matches earth.frag's convention for the limb term.
-in vec3 vLocal;   // object-space unit-sphere position (== object normal)
+in vec3 vLocal;   // mirrored from earth.vert for VAO signature parity; intentionally unused here
 in vec3 vWorld;   // world-space position
 in vec2 vUV;      // sphere UV
 out vec4 FragColor;

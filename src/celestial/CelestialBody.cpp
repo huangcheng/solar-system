@@ -378,20 +378,23 @@ void CelestialBody::render() {
 
     // Atmosphere (thin back-face shell). Keep depth test ON (enabled by the
     // earth pass) with depth writes off so the Earth occludes the inner shell
-    // and only the silhouette limb glow is rasterized.
-    m_gl->glDepthMask(GL_FALSE);
-    QMatrix4x4 amodel = oriented;
-    amodel.scale(1.02f);
-    m_atmoProg->bind();
-    m_atmoProg->setUniformValue("uMVP", proj * view * amodel);
-    m_atmoProg->setUniformValue("uModel", amodel);
-    m_atmoProg->setUniformValue("uSunDir", sunWorld);
-    m_atmoProg->setUniformValue("uViewPos", QVector3D(0, 0, 3.25));
-    m_gl->glCullFace(GL_FRONT);
-    m_gl->glEnable(GL_CULL_FACE);
-    m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
-    m_gl->glDisable(GL_CULL_FACE);
-    m_gl->glDepthMask(GL_TRUE);
+    // and only the silhouette limb glow is rasterized. Gated on hasAtmosphere
+    // so airless bodies (Moon, Mercury) don't get a phantom Earth-blue limb.
+    if (m_config.hasAtmosphere) {
+        m_gl->glDepthMask(GL_FALSE);
+        QMatrix4x4 amodel = oriented;
+        amodel.scale(1.02f);
+        m_atmoProg->bind();
+        m_atmoProg->setUniformValue("uMVP", proj * view * amodel);
+        m_atmoProg->setUniformValue("uModel", amodel);
+        m_atmoProg->setUniformValue("uSunDir", sunWorld);
+        m_atmoProg->setUniformValue("uViewPos", QVector3D(0, 0, 3.25));
+        m_gl->glCullFace(GL_FRONT);
+        m_gl->glEnable(GL_CULL_FACE);
+        m_gl->glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
+        m_gl->glDisable(GL_CULL_FACE);
+        m_gl->glDepthMask(GL_TRUE);
+    }
 
     // Rings (Saturn). Drawn AFTER the body sphere + atmosphere, using the SAME
     // model matrix as the planet so the annulus lies in the body's equatorial
