@@ -69,6 +69,10 @@ void SettingsDialog::setupUi() {
     m_homeLocLabel = new QLabel(tr("Home marker location:"));
     form->addRow(m_homeLocLabel, homeRow);
 
+    m_autoLocCheck = new QCheckBox(tr("Auto-detect my location"));
+    m_autoLocCheck->setChecked(m_config->locationOptIn());
+    form->addRow(m_autoLocCheck);
+
     m_nightGroup = new QGroupBox(tr("Night Mode"));
     auto *nightLayout = new QVBoxLayout(m_nightGroup);
     m_simpleNightRadio = new QRadioButton(tr("Simple Night"));
@@ -122,6 +126,7 @@ void SettingsDialog::retranslateUi() {
     m_gridCheck->setText(tr("Show Grid"));
     m_alwaysOnTopCheck->setText(tr("Always on Top"));
     m_markerCheck->setText(tr("Show home marker"));
+    m_autoLocCheck->setText(tr("Auto-detect my location"));
     m_langLabel->setText(tr("Language:"));
     m_viewModeLabel->setText(tr("View Mode:"));
     m_homeLocLabel->setText(tr("Home marker location:"));
@@ -151,6 +156,7 @@ void SettingsDialog::accept() {
                                ? QStringLiteral("texture") : QStringLiteral("simple"));
     m_config->setViewMode(m_viewModeCombo->currentData().toString());
     m_config->setShowHomeMarker(m_markerCheck->isChecked());
+    m_config->setLocationOptIn(m_autoLocCheck->isChecked());
     m_config->setHomeLatitude(m_latSpin->value());
     m_config->setHomeLongitude(m_lonSpin->value());
     m_config->save();

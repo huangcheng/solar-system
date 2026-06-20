@@ -51,15 +51,11 @@ void CelestialWidget::applyOptionsFromConfig() {
 }
 
 void CelestialWidget::setHomeLocation(double lat, double lon) {
-    m_hasLocationFix = true;
     CelestialRenderOptions opts = m_body.options();
     opts.homeLat = lat;
     opts.homeLon = lon;
-    // Respect the user's location opt-in: if they later disable location in
-    // settings, applyOptionsFromConfig() will turn hasHome back off; but while
-    // opted in, a fix enables the beacon immediately here.
-    if (m_config && m_config->locationOptIn())
-        opts.hasHome = true;
+    // hasHome stays as applyOptionsFromConfig set it (= showHomeMarker); a real
+    // fix updates the marker's coordinates without forcing visibility on.
     m_body.setOptions(opts);
     update();
 }

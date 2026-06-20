@@ -30,6 +30,7 @@ private:
     QCheckBox *m_gridCheck = nullptr;
     QCheckBox *m_alwaysOnTopCheck = nullptr;
     QCheckBox *m_markerCheck = nullptr;
+    QCheckBox *m_autoLocCheck = nullptr;
     QRadioButton *m_simpleNightRadio = nullptr;
     QRadioButton *m_textureNightRadio = nullptr;
     QComboBox *m_languageCombo = nullptr;
