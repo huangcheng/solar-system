@@ -1,0 +1,25 @@
+1 VERSIONINFO
+FILEVERSION @GLOBE_VERSION_MAJOR@,@GLOBE_VERSION_MINOR@,@GLOBE_VERSION_PATCH@,0
+PRODUCTVERSION @GLOBE_VERSION_MAJOR@,@GLOBE_VERSION_MINOR@,@GLOBE_VERSION_PATCH@,0
+FILEOS 0x40004
+FILETYPE 0x1
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "HUANG Cheng"
+            VALUE "FileDescription", "A tiny desktop Earth globe widget"
+            VALUE "FileVersion", "@GLOBE_VERSION@"
+            VALUE "InternalName", "earth"
+            VALUE "LegalCopyright", "Copyright (c) 2026 HUANG Cheng"
+            VALUE "OriginalFilename", "earth.exe"
+            VALUE "ProductName", "Globe"
+            VALUE "ProductVersion", "@GLOBE_VERSION@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 0x04b0
+    END
+END

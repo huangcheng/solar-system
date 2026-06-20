@@ -85,11 +85,34 @@ if(WIN32)
     target_link_libraries(celestial PUBLIC dwmapi user32)
 endif()
 
+set(GLOBE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(GLOBE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(GLOBE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(GLOBE_VERSION "${PROJECT_VERSION}")
+
+if(WIN32)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/apps/earth/earth.rc.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/earth.rc"
+        @ONLY)
+    set(earth_rc "${CMAKE_CURRENT_BINARY_DIR}/earth.rc")
+endif()
+
 qt_add_executable(earth
     WIN32 MACOSX_BUNDLE
     src/apps/earth/main.cpp
+    ${earth_rc}
 )
+
 target_link_libraries(earth PRIVATE celestial)
+
+set_target_properties(earth PROPERTIES
+    MACOSX_BUNDLE_BUNDLE_NAME "Globe"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.huangcheng.globe"
+    MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2026 HUANG Cheng"
+)
 
 qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
 
