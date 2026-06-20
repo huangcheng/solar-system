@@ -110,7 +110,6 @@ int main(int argc, char *argv[]) {
         CelestialRenderOptions opts = widget.body().options();
         opts.useCenterLon = false;
         widget.body().setOptions(opts);
-        widget.resize(220, 220);
         widget.update();
     });
     QObject::connect(&tray, &SystemTray::centerOnMe, &widget, [&widget, &camera, &config] {
@@ -119,7 +118,6 @@ int main(int argc, char *argv[]) {
         opts.centerLon = config.homeLongitude();
         opts.useCenterLon = true;
         widget.body().setOptions(opts);
-        widget.resize(220, 220);
         widget.update();
     });
 

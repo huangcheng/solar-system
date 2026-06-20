@@ -128,13 +128,12 @@ void CelestialWidget::wheelEvent(QWheelEvent *e) {
 void CelestialWidget::mouseDoubleClickEvent(QMouseEvent *e) {
     if (m_cam) {
         m_cam->reset();
-        const QPoint center = window()->geometry().center();
-        window()->resize(220, 220);
-        window()->move(center - QPoint(110, 110));
-        if (m_config) {
-            m_config->setDiameter(220);
-            m_config->save();
-        }
+        // Double-click is a camera-orientation reset, not a size reset: leave
+        // the window at its current (possibly wheel-resized) diameter. Clear
+        // useCenterLon for parity with the tray "Reset View" action.
+        CelestialRenderOptions opts = m_body.options();
+        opts.useCenterLon = false;
+        m_body.setOptions(opts);
         update();
     }
     QOpenGLWidget::mouseDoubleClickEvent(e);
