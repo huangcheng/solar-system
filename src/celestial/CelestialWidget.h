@@ -25,6 +25,10 @@ public:
 
     void applyOptionsFromConfig();
 
+    // Called when a real location fix arrives: enables the home beacon at the
+    // given coordinates. Idempotent; enabling once keeps it on across repaints.
+    void setHomeLocation(double lat, double lon);
+
 protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
@@ -47,4 +51,5 @@ private:
     CameraController *m_cam = nullptr;
     QPoint m_lastPos;
     bool m_moveGesture = false;  // true while an Alt-drag/middle-drag window move is in progress
+    bool m_hasLocationFix = false;  // a real GPS/IP fix has been received (gates the home beacon)
 };

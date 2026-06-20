@@ -74,11 +74,13 @@ int main(int argc, char *argv[]) {
     widget.applyOptionsFromConfig();  // sets home location, grid, night mode, rotation speed
 
     QObject::connect(&location, &LocationProvider::locationChanged, &widget,
-        [&widget](double lat, double lon) {
-            CelestialRenderOptions opts = widget.body().options();
-            opts.homeLat = lat; opts.homeLon = lon; opts.hasHome = true;
-            widget.body().setOptions(opts);
-            widget.update();
+        [&widget, &config](double lat, double lon) {
+            // Persist the fix so it survives restart, then let the widget
+            // update its beacon (gated by opt-in inside the widget).
+            config.setHomeLatitude(lat);
+            config.setHomeLongitude(lon);
+            config.save();
+            widget.setHomeLocation(lat, lon);
         });
 
     TimeController time(&sun);
