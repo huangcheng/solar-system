@@ -1,4 +1,5 @@
 #include "AssetManager.h"
+#include <QColor>
 #include <QFile>
 #include <QStandardPaths>
 #include <QCoreApplication>
@@ -58,4 +59,32 @@ QImage AssetManager::image(Slot slot, int tierMaxSize) const {
         img = img.scaled(tierMaxSize, nh, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
     return img;
+}
+
+bool AssetManager::hasFile(const QString& fileName) const {
+    for (const QString& d : m_dirs) {
+        if (QFile::exists(d + QLatin1Char('/') + fileName)) return true;
+    }
+    return false;
+}
+
+QImage AssetManager::image(const QString& fileName, int tierMaxSize) const {
+    for (const QString& d : m_dirs) {
+        const QString p = d + QLatin1Char('/') + fileName;
+        if (QFile::exists(p)) {
+            QImage img(p);
+            if (!img.isNull()) {
+                const int w = img.width(), h = img.height();
+                if (w > tierMaxSize) {
+                    const int nh = int(qint64(h) * tierMaxSize / qMax(1, w));
+                    img = img.scaled(tierMaxSize, nh, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+                }
+                return img;
+            }
+        }
+    }
+    // Procedural fallback: neutral gray so the body is visible, not black.
+    QImage fb(512, 256, QImage::Format_RGB32);
+    fb.fill(QColor(120, 120, 120));
+    return fb;
 }

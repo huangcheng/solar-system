@@ -16,6 +16,13 @@ public:
     QImage image(Slot slot, int tierMaxSize) const;
     bool hasFile(Slot slot) const;
 
+    // Body-agnostic API: load any named texture from the search dirs (used by
+    // BodyConfig-driven bodies like Sun/Moon/planets). Returns a procedural
+    // fallback (solid neutral gray) if not found, never a null QImage.
+    // tierMaxSize caps the long edge.
+    QImage image(const QString& fileName, int tierMaxSize) const;
+    bool hasFile(const QString& fileName) const;
+
 private:
     QStringList m_dirs;                 // searched in order
     QString pathFor(Slot slot) const;   // first existing file across m_dirs
