@@ -33,6 +33,7 @@ protected:
     void resizeEvent(QResizeEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
     void mouseMoveEvent(QMouseEvent *) override;
+    void mouseReleaseEvent(QMouseEvent *) override;
     void wheelEvent(QWheelEvent *) override;
     void mouseDoubleClickEvent(QMouseEvent *) override;
 
@@ -45,4 +46,5 @@ private:
     ConfigManager *m_config = nullptr;
     CameraController *m_cam = nullptr;
     QPoint m_lastPos;
+    bool m_moveGesture = false;  // true while an Alt-drag/middle-drag window move is in progress
 };

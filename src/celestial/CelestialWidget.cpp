@@ -88,11 +88,7 @@ void CelestialWidget::mouseMoveEvent(QMouseEvent *e) {
     if (moveGesture) {
         window()->move(window()->pos() + g - m_lastPos);
         m_lastPos = g;
-        if (m_config) {
-            m_config->setWindowX(window()->pos().x());
-            m_config->setWindowY(window()->pos().y());
-            m_config->save();
-        }
+        m_moveGesture = true;  // defer config.save() to mouseReleaseEvent
     } else if ((e->buttons() & Qt::LeftButton) && m_cam) {
         const QPoint d = g - m_lastPos;
         m_lastPos = g;
@@ -100,6 +96,18 @@ void CelestialWidget::mouseMoveEvent(QMouseEvent *e) {
         update();
     }
     QOpenGLWidget::mouseMoveEvent(e);
+}
+
+void CelestialWidget::mouseReleaseEvent(QMouseEvent *e) {
+    // Persist the final window position once, on release, instead of on every
+    // mouse-move pixel (which thrashed disk and stuttered the drag).
+    if (m_moveGesture && m_config) {
+        m_config->setWindowX(window()->pos().x());
+        m_config->setWindowY(window()->pos().y());
+        m_config->save();
+    }
+    m_moveGesture = false;
+    QOpenGLWidget::mouseReleaseEvent(e);
 }
 
 void CelestialWidget::wheelEvent(QWheelEvent *e) {
