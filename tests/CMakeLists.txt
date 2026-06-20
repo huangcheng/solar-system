@@ -18,3 +18,5 @@ globe_add_test(test_locationprovider)
 globe_add_test(test_bodyconfig)
 
 globe_add_test(test_terminator)
+
+globe_add_test(test_citydatabase)

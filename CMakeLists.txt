@@ -40,12 +40,20 @@ qt_add_library(celestial STATIC
     src/celestial/CelestialWidget.cpp
     src/celestial/TerminatorModel.h
     src/celestial/TerminatorModel.cpp
+    src/celestial/CityDatabase.h
+    src/celestial/CityDatabase.cpp
+    src/celestial/cities.qrc
 )
 
 target_include_directories(celestial PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/celestial
 )
+
+# AUTORCC is not turned on by qt_standard_project_setup() in this Qt; enable it
+# explicitly so the bundled cities.qrc is rcc-compiled into the static lib
+# (resolves at runtime as :/data/cities.json).
+set_target_properties(celestial PROPERTIES AUTORCC ON)
 
 target_link_libraries(celestial PUBLIC
     Qt::Core Qt::Gui Qt::Widgets Qt::OpenGL Qt::OpenGLWidgets Qt::Positioning
