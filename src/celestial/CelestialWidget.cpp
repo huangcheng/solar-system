@@ -24,7 +24,11 @@ CelestialWidget::CelestialWidget(const BodyConfig& config,
     resize(220, 220);
 
     QSurfaceFormat fmt;
+#ifdef Q_OS_MACOS
+    fmt.setVersion(4, 1);
+#else
     fmt.setVersion(3, 3);
+#endif
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     fmt.setSamples(4);
     fmt.setSwapInterval(1);

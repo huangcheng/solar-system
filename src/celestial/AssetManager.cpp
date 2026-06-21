@@ -5,10 +5,14 @@
 
 AssetManager::AssetManager(QString dir) {
     // Search order: explicit dir, then the folder next to the binary (where the
-    // installer ships HD textures), then the dev tree (../textures when running
-    // from the build dir), then the user-local cache.
+    // installer ships HD textures), then the macOS bundle Resources directory
+    // (binary lives in <name>.app/Contents/MacOS/), then the dev tree
+    // (../textures when running from the build dir), then the user-local cache.
     if (!dir.isEmpty()) m_dirs.append(dir);
     m_dirs.append(QCoreApplication::applicationDirPath() + "/textures");
+#ifdef Q_OS_MACOS
+    m_dirs.append(QCoreApplication::applicationDirPath() + "/../Resources/textures");
+#endif
     m_dirs.append(QCoreApplication::applicationDirPath() + "/../textures");
     m_dirs.append(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/textures");
 }

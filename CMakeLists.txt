@@ -98,10 +98,15 @@ if(WIN32)
     set(earth_rc "${CMAKE_CURRENT_BINARY_DIR}/earth.rc")
 endif()
 
+if(APPLE)
+    set(earth_icns "${CMAKE_CURRENT_SOURCE_DIR}/src/celestial/data/icon.icns")
+endif()
+
 qt_add_executable(earth
     WIN32 MACOSX_BUNDLE
     src/apps/earth/main.cpp
     ${earth_rc}
+    ${earth_icns}
 )
 
 target_link_libraries(earth PRIVATE celestial)
@@ -112,7 +117,17 @@ set_target_properties(earth PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
     MACOSX_BUNDLE_GUI_IDENTIFIER "com.huangcheng.globe"
     MACOSX_BUNDLE_COPYRIGHT "Copyright (c) 2026 HUANG Cheng"
+    MACOSX_BUNDLE_ICON_FILE "icon.icns"
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/src/apps/earth/Info.plist.in"
 )
+
+# Copy the .icns into the bundle's Resources directory on macOS.
+if(APPLE)
+    add_custom_command(TARGET earth POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/celestial/data/icon.icns"
+            "$<TARGET_FILE_DIR:earth>/../Resources/icon.icns")
+endif()
 
 qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
 
@@ -125,6 +140,23 @@ add_custom_command(TARGET earth POST_BUILD
         "${CMAKE_CURRENT_SOURCE_DIR}/src/celestial/data/ip-services.json"
         "$<TARGET_FILE_DIR:earth>/data/ip-services.json")
 
+# On macOS the binary lives inside <name>.app/Contents/MacOS/. The relative
+# search paths (../shaders, ../textures) resolve inside the bundle and never
+# reach the source tree. Copy both shaders and textures into the bundle's
+# Resources directory (the macOS convention) so the runtime path lookups in
+# CelestialBody and AssetManager can find them.
+if(APPLE)
+    add_custom_command(TARGET earth POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:earth>/../Resources/shaders"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/celestial/shaders"
+            "$<TARGET_FILE_DIR:earth>/../Resources/shaders"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:earth>/../Resources/textures"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/textures"
+            "$<TARGET_FILE_DIR:earth>/../Resources/textures")
+endif()
+
 install(TARGETS earth
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -136,12 +168,20 @@ install(SCRIPT ${deploy_script})
 
 # Ship the bundled textures next to the installed binary. AssetManager searches
 # applicationDirPath()/textures, ../textures, and the user-local cache.
-install(DIRECTORY textures/ DESTINATION textures)
+if(APPLE)
+    install(DIRECTORY textures/ DESTINATION earth.app/Contents/Resources/textures)
+else()
+    install(DIRECTORY textures/ DESTINATION textures)
+endif()
 
 # Ship the GLSL shaders next to the binary. CelestialBody::loadShaderSource()
 # reads applicationDirPath()/shaders; without these the programs fail to link
 # and the globe renders solid black.
-install(DIRECTORY src/celestial/shaders/ DESTINATION ${CMAKE_INSTALL_BINDIR}/shaders)
+if(APPLE)
+    install(DIRECTORY src/celestial/shaders/ DESTINATION earth.app/Contents/Resources/shaders)
+else()
+    install(DIRECTORY src/celestial/shaders/ DESTINATION ${CMAKE_INSTALL_BINDIR}/shaders)
+endif()
 
 # Tests
 enable_testing()

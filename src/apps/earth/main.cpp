@@ -12,6 +12,7 @@
 #include "AboutDialog.h"
 #include <QApplication>
 #include <QCoreApplication>
+#include <QSurfaceFormat>
 #include <QTimer>
 #include <QDateTime>
 #include <QTranslator>
@@ -32,10 +33,34 @@ int main(int argc, char *argv[]) {
     }
 #else
     {
-        QSharedMemory shm(QStringLiteral("GlobeAppSingleton_Earth_v1"));
-        if (!shm.create(1)) return 0;
+        QSharedMemory shm(QStringLiteral("GlobeAppSingleton_Earth_v2"));
+        if (!shm.create(1)) {
+            // If create() failed because a previous instance crashed and left a
+            // stale shared-memory segment, attach+detach cleans it up on Unix.
+            if (shm.attach()) shm.detach();
+            if (!shm.create(1)) return 0;
+        }
     }
 #endif
+
+    // Set the default OpenGL surface format BEFORE constructing QApplication.
+    // On macOS this is mandatory: Qt creates internal shared contexts during app
+    // initialization and they must match the version/profile the widget requests.
+    // Without this, Apple Silicon falls back to an unshared 2.1 context, which
+    // then produces "GLD_TEXTURE_INDEX_2D is unloadable" errors and black textures.
+    // macOS supports up to OpenGL 4.1 Core; other platforms use 3.3 Core.
+    {
+        QSurfaceFormat fmt;
+#ifdef Q_OS_MACOS
+        fmt.setVersion(4, 1);
+#else
+        fmt.setVersion(3, 3);
+#endif
+        fmt.setProfile(QSurfaceFormat::CoreProfile);
+        fmt.setOption(QSurfaceFormat::DeprecatedFunctions, false);
+        fmt.setRenderableType(QSurfaceFormat::OpenGL);
+        QSurfaceFormat::setDefaultFormat(fmt);
+    }
 
     QApplication app(argc, argv);
     // Phase 1 keeps the legacy "Globe" application name so that

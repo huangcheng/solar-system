@@ -5,7 +5,16 @@
 #include <QPixmap>
 
 SystemTray::SystemTray(QObject *parent) : QSystemTrayIcon(parent) {
+#ifdef Q_OS_MACOS
+    // macOS menu bar: use a monochrome continental silhouette so it matches the
+    // SF Symbols-style system icons and adapts to light/dark menu bars.
+    QIcon icon(QStringLiteral(":/data/icon_tray_mac.png"));
+    icon.setIsMask(true);
+    setIcon(icon);
+#else
+    // Windows / other platforms: keep the colored Earth icon.
     setIcon(QIcon(QStringLiteral(":/data/icon.png")));
+#endif
     buildMenu();
     setContextMenu(m_menu);
     show();

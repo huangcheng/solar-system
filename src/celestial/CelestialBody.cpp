@@ -15,10 +15,15 @@ constexpr double kPi = 3.14159265358979323846;
 
 // Load a GLSL source file from disk. Searches a few candidate directories so
 // the same code works for an installed app (<exedir>/shaders) and a dev build
-// (../src/celestial/shaders).
+// (../src/celestial/shaders).  On macOS the binary lives inside
+// <name>.app/Contents/MacOS/, so we also check ../Resources/shaders (the
+// standard bundle layout).
 QByteArray loadShaderSource(const QString &name) {
     const QStringList dirs = {
         QCoreApplication::applicationDirPath() + "/shaders",
+#ifdef Q_OS_MACOS
+        QCoreApplication::applicationDirPath() + "/../Resources/shaders",
+#endif
         QCoreApplication::applicationDirPath() + "/../src/celestial/shaders",
         QCoreApplication::applicationDirPath() + "/../../src/celestial/shaders",
     };
@@ -124,7 +129,13 @@ void CelestialBody::loadTextures() {
     // downsampling them is what made the night side read as "a few lights".
     const int cap = qMin(m_tierMaxSize, 4096);
     auto make = [](const QImage &img) {
-        auto t = std::make_unique<QOpenGLTexture>(img.flipped(Qt::Vertical));
+        // On Apple Silicon the OpenGL-to-Metal translation layer can reject
+        // textures uploaded via the BGRA/REV fast path (Format_RGB32).  Force
+        // RGBA8888 so the upload always uses GL_RGBA / GL_UNSIGNED_BYTE, which
+        // is the most reliable path on macOS.
+        QImage upload = img.convertToFormat(QImage::Format_RGBA8888)
+                            .flipped(Qt::Vertical);
+        auto t = std::make_unique<QOpenGLTexture>(upload);
         // Mipmaps ON (LinearMipMapLinear). Without them, the relief normal map
         // (amplified x3.8) and the sharp ocean glint alias every frame while the
         // globe spins, so the surface shimmers/"shines". Mipmaps blur distant/
