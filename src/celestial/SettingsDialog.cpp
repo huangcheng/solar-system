@@ -26,6 +26,7 @@ void SettingsDialog::setupUi() {
     auto *layout = new QVBoxLayout(this);
 
     auto *form = new QFormLayout;
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
     m_languageCombo = new QComboBox;
     m_languageCombo->addItem(tr("English"), QStringLiteral("en"));
@@ -62,6 +63,8 @@ void SettingsDialog::setupUi() {
 
     m_homeGroup = new QGroupBox(tr("Home Location"));
     auto *homeLayout = new QFormLayout(m_homeGroup);
+    homeLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    homeLayout->setLabelAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     m_cityCombo = new QComboBox;
     m_cityCombo->setEditable(true);
@@ -98,6 +101,7 @@ void SettingsDialog::setupUi() {
         m_statusLabel->setText(tr("Fetching location..."));
         const QString method = m_detectCombo->currentData().toString();
         if (method == QStringLiteral("system")) {
+            m_systemFetchPending = true;
             if (m_location) m_location->requestOnceSystem();
         } else {
             m_ipLocator.request();
@@ -118,7 +122,14 @@ void SettingsDialog::setupUi() {
     m_lonSpin->setValue(m_config->homeLongitude());
     m_lonLabel = new QLabel(tr("Longitude:"));
 
+    // Keep the coordinate labels readable on platforms with larger system fonts.
+    m_latLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    m_lonLabel->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    m_latSpin->setMinimumWidth(90);
+    m_lonSpin->setMinimumWidth(90);
+
     auto *coordsRow = new QWidget;
+    coordsRow->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
     auto *coordsLay = new QHBoxLayout(coordsRow);
     coordsLay->setContentsMargins(0, 0, 0, 0);
     coordsLay->addWidget(m_latLabel);
@@ -134,6 +145,8 @@ void SettingsDialog::setupUi() {
 
     m_statusLabel = new QLabel;
     m_statusLabel->setWordWrap(true);
+    m_statusLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    m_statusLabel->setMinimumWidth(240);
     homeLayout->addRow(QString(), m_statusLabel);
 
     // Wire city selection AFTER populate so the initial addItems don't fire.
@@ -151,9 +164,23 @@ void SettingsDialog::setupUi() {
     connect(m_lonSpin, &QDoubleSpinBox::editingFinished, this, &SettingsDialog::onCoordsEdited);
 
     // Live location detection -> update spinboxes/config + best-effort combo.
-    if (m_location)
+    if (m_location) {
         connect(m_location, &LocationProvider::locationChanged, this,
-                [this](double lat, double lon) { onLocationFound(lat, lon, QString()); });
+                [this](double lat, double lon) {
+                    m_systemFetchPending = false;
+                    onLocationFound(lat, lon, QString());
+                });
+        // If a user-initiated System fetch cannot get a fix (permission denied,
+        // no backend, or timeout), surface it and fall back to IP automatically
+        // so the user still ends up with a location.
+        connect(m_location, &LocationProvider::locationFailed, this, [this]() {
+            if (!m_systemFetchPending)
+                return;   // not a user-initiated fetch (e.g. startup) -> ignore here
+            m_systemFetchPending = false;
+            m_statusLabel->setText(tr("System location unavailable; trying IP..."));
+            m_ipLocator.request();
+        });
+    }
     connect(&m_ipLocator, &IpLocator::located, this, &SettingsDialog::onLocationFound);
     connect(&m_ipLocator, &IpLocator::failed, this, [this]() {
         m_statusLabel->setText(tr("IP location lookup failed."));

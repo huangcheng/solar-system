@@ -1,1 +1,1 @@
-<RCC><qresource prefix="/data"><file alias="cities.json">data/cities.json</file><file alias="icon.png">data/icon.png</file><file alias="icon_tray_mac.png">data/icon_tray_mac.png</file></qresource></RCC>
+<RCC><qresource prefix="/data"><file alias="cities.json">data/cities.json</file><file alias="ip-services.json">data/ip-services.json</file><file alias="icon.png">data/icon.png</file><file alias="icon_tray_mac.png">data/icon_tray_mac.png</file></qresource></RCC>

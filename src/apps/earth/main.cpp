@@ -8,6 +8,7 @@
 #include "AssetManager.h"
 #include "TimeController.h"
 #include "LocationProvider.h"
+#include "IpLocator.h"
 #include "BodyConfig.h"
 #include "AboutDialog.h"
 #include <QApplication>
@@ -102,6 +103,10 @@ int main(int argc, char *argv[]) {
     LocationProvider location;
     widget.applyOptionsFromConfig();  // sets home location, grid, night mode, rotation speed
     if (config.autoDetectOnStart()) location.requestOnceSystem();   // startup auto-detect (one-shot)
+    if (qEnvironmentVariableIsSet("GLOBE_DIAG")) {   // diagnostic probe (silent unless env set)
+        qWarning() << "[GLOBE_DIAG] env trigger -> requestOnceSystem";
+        location.requestOnceSystem(4000);
+    }
 
     QObject::connect(&location, &LocationProvider::locationChanged, &widget,
         [&widget, &config](double lat, double lon) {
@@ -112,6 +117,21 @@ int main(int argc, char *argv[]) {
             config.save();
             widget.setHomeLocation(lat, lon);
         });
+
+    // Startup IP fallback: if the system provider cannot get a fix (e.g. the
+    // user denies CoreLocation permission), approximate via IP so auto-detect
+    // on startup still yields a usable home location.
+    IpLocator startupIpLocator;
+    QObject::connect(&startupIpLocator, &IpLocator::located, &widget,
+        [&widget, &config](double lat, double lon, const QString &) {
+            config.setHomeLatitude(lat);
+            config.setHomeLongitude(lon);
+            config.save();
+            widget.setHomeLocation(lat, lon);
+        });
+    if (config.autoDetectOnStart())
+        QObject::connect(&location, &LocationProvider::locationFailed,
+                         &widget, [&startupIpLocator] { startupIpLocator.request(); });
 
     TimeController time(&sun);
     time.setTarget(&widget);

@@ -131,9 +131,10 @@ endif()
 
 qt_add_translations(TARGETS earth TS_FILES globe_zh_CN.ts)
 
-# Ship the editable IP service list next to the built earth.exe so it can be
-# tuned post-ship without a recompile. IpLocator reads appDir/data/ip-services.json
-# and falls back to a compiled-in default if the file is missing/corrupt.
+# Optionally copy the editable IP service list next to the built earth binary
+# so it can be tuned post-ship without a recompile. The authoritative copy is
+# the embedded :/data/ip-services.json resource (see cities.qrc); this loose
+# file is only an optional override that IpLocator prefers when present.
 add_custom_command(TARGET earth POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:earth>/data"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -161,7 +162,6 @@ install(TARGETS earth
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-install(FILES src/celestial/data/ip-services.json DESTINATION ${CMAKE_INSTALL_BINDIR}/data)
 
 qt_generate_deploy_app_script(TARGET earth OUTPUT_SCRIPT deploy_script NO_UNSUPPORTED_PLATFORM_ERROR)
 install(SCRIPT ${deploy_script})
@@ -186,3 +186,8 @@ endif()
 # Tests
 enable_testing()
 add_subdirectory(tests)
+
+# Finalize the executable so Qt can embed the Info.plist, sign the bundle, and
+# wire any platform-specific post-processing (required for the macOS location
+# permission flow to resolve the usage-description key correctly).
+qt_finalize_executable(earth)

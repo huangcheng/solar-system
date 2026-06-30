@@ -32,5 +32,11 @@
 	<string>NSApplication</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<key>NSLocationUsageDescription</key>
+	<string>Globe uses your location to place your home marker on the globe and compute local day and night.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Globe uses your location to place your home marker on the globe and compute local day and night.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Globe uses your location to place your home marker on the globe and compute local day and night.</string>
 </dict>
 </plist>

@@ -1,7 +1,7 @@
 {
   "services": [
-    { "name": "ip-api", "url": "http://ip-api.com/json/", "latField": "lat", "lonField": "lon", "cityField": "city", "timeoutSec": 3 },
+    { "name": "reallyfreegeoip", "url": "https://reallyfreegeoip.org/json/", "latField": "latitude", "lonField": "longitude", "cityField": "city", "timeoutSec": 5 },
     { "name": "ipinfo", "url": "https://ipinfo.io/json/", "locField": "loc", "locSeparator": ",", "cityField": "city", "timeoutSec": 3 },
-    { "name": "ipapi", "url": "https://ipapi.co/json/", "latField": "latitude", "lonField": "longitude", "cityField": "city", "timeoutSec": 3 }
+    { "name": "ipapi", "url": "https://ipapi.co/json/", "latField": "latitude", "lonField": "longitude", "cityField": "city", "timeoutSec": 4 }
   ]
 }

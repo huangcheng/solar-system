@@ -39,6 +39,7 @@ private:
     ConfigManager *m_config = nullptr;
     LocationProvider *m_location = nullptr;
     IpLocator m_ipLocator;
+    bool m_systemFetchPending = false;   // true between a System fetch click and its result
 
     QCheckBox *m_gridCheck = nullptr;
     QCheckBox *m_alwaysOnTopCheck = nullptr;

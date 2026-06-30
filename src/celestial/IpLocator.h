@@ -11,11 +11,12 @@ struct IpService {
 
 class QNetworkReply;
 
-// Network IP geolocator. Reads its service list from a loose, editable
-// `data/ip-services.json` (shipped next to the executable) and tries each
-// service in order until one succeeds. Falls back to a compiled-in minimal
-// default (ip-api) if the file is missing or corrupt, so the app always has
-// at least one provider — no recompile needed to add or reorder services.
+// Network IP geolocator. Loads its service list in priority order: a loose,
+// editable <appDir>/data/ip-services.json (if present), then an embedded
+// :/data/ip-services.json resource (always shipped in the binary, so it works
+// in bundled/installed/DMG builds), then a hard-coded HTTPS-only fallback.
+// Services are tried in order until one succeeds. All built-in services use
+// HTTPS because macOS App Transport Security blocks plain HTTP.
 class IpLocator : public QObject {
     Q_OBJECT
 public:

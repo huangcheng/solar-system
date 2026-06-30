@@ -1,5 +1,6 @@
 #include "ConfigManager.h"
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
@@ -157,6 +158,9 @@ void ConfigManager::save() {
     o["launchOnLogin"] = m_launchOnLogin;
     o["viewMode"] = m_viewMode;
     QFile f(m_path);
+    // AppConfigLocation is not guaranteed to exist yet; without this, QFile
+    // silently fails to open for writing and NOTHING persists across launches.
+    QDir().mkpath(QFileInfo(m_path).absolutePath());
     if (f.open(QIODevice::WriteOnly))
         f.write(QJsonDocument(o).toJson(QJsonDocument::Indented));
 }

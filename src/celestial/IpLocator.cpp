@@ -30,49 +30,67 @@ static bool jsonToDouble(const QJsonValue &v, double &out)
 
 QList<IpService> IpLocator::compiledDefault()
 {
-    // Always-available fallback so the app works even if the loose file is
-    // missing or corrupt. ip-api needs no API key and returns plain JSON.
+    // LAST-RESORT safety net only. The authoritative, editable service list is
+    // data/ip-services.json (shipped embedded as :/data/ip-services.json and as
+    // a loose appDir/data/ip-services.json override) -- that file is where
+    // provider choices and network-specific tuning belong, so no recompile is
+    // needed to add/reorder services. This compiled fallback is reached only if
+    // both the loose file and the embedded resource are somehow missing/empty,
+    // so it intentionally carries a single generic HTTPS provider (plain HTTP
+    // is avoided because macOS App Transport Security blocks it).
     QList<IpService> out;
     IpService s;
-    s.name = QStringLiteral("ip-api");
-    s.url = QStringLiteral("http://ip-api.com/json/");
-    s.latField = QStringLiteral("lat");
-    s.lonField = QStringLiteral("lon");
+    s.name = QStringLiteral("reallyfreegeoip");
+    s.url = QStringLiteral("https://reallyfreegeoip.org/json/");
+    s.latField = QStringLiteral("latitude");
+    s.lonField = QStringLiteral("longitude");
     s.cityField = QStringLiteral("city");
-    s.timeoutSec = 3;
+    s.timeoutSec = 5;
     out.append(s);
     return out;
 }
 
 QList<IpService> IpLocator::loadServices()
 {
-    const QString path =
-        QCoreApplication::applicationDirPath() + QStringLiteral("/data/ip-services.json");
-    QFile f(path);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-        return compiledDefault();   // missing: use compiled-in default
-    const QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
-    if (!doc.isObject())
-        return compiledDefault();   // corrupt: fall back
-    const QJsonArray arr = doc.object().value(QStringLiteral("services")).toArray();
-    if (arr.isEmpty())
-        return compiledDefault();   // empty list: fall back
-    QList<IpService> out;
-    out.reserve(arr.size());
-    for (const QJsonValue &v : arr) {
-        const QJsonObject o = v.toObject();
-        IpService s;
-        s.name = o.value("name").toString();
-        s.url = o.value("url").toString();
-        s.latField = o.value("latField").toString();
-        s.lonField = o.value("lonField").toString();
-        s.locField = o.value("locField").toString();
-        s.locSeparator = o.value("locSeparator").toString();
-        s.cityField = o.value("cityField").toString();
-        s.timeoutSec = o.value("timeoutSec").toInt(3);
-        if (!s.url.isEmpty())
-            out.append(std::move(s));
-    }
+    // Precedence:
+    //   1. Loose <appDir>/data/ip-services.json  (power-user override; only
+    //      present in dev builds or when explicitly shipped).
+    //   2. Embedded :/data/ip-services.json       (always available; ships
+    //      inside the binary so it survives bundling/DMG/install).
+    //   3. compiledDefault()                       (hard-coded HTTPS fallback).
+    auto loadFrom = [](const QString &path) -> QList<IpService> {
+        QFile f(path);
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+            return {};
+        const QJsonDocument doc = QJsonDocument::fromJson(f.readAll());
+        if (!doc.isObject())
+            return {};
+        const QJsonArray arr = doc.object().value(QStringLiteral("services")).toArray();
+        if (arr.isEmpty())
+            return {};
+        QList<IpService> out;
+        out.reserve(arr.size());
+        for (const QJsonValue &v : arr) {
+            const QJsonObject o = v.toObject();
+            IpService s;
+            s.name = o.value("name").toString();
+            s.url = o.value("url").toString();
+            s.latField = o.value("latField").toString();
+            s.lonField = o.value("lonField").toString();
+            s.locField = o.value("locField").toString();
+            s.locSeparator = o.value("locSeparator").toString();
+            s.cityField = o.value("cityField").toString();
+            s.timeoutSec = o.value("timeoutSec").toInt(3);
+            if (!s.url.isEmpty())
+                out.append(std::move(s));
+        }
+        return out;
+    };
+
+    QList<IpService> out = loadFrom(
+        QCoreApplication::applicationDirPath() + QStringLiteral("/data/ip-services.json"));
+    if (out.isEmpty())
+        out = loadFrom(QStringLiteral(":/data/ip-services.json"));
     return out.isEmpty() ? compiledDefault() : out;
 }
 

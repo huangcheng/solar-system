@@ -10,6 +10,7 @@ private slots:
     void extractIpapi();
     void badJsonReturnsFalse();
     void fallbackNonEmpty();
+    void compiledDefaultIsHttps();
 };
 
 void TestIpLocator::extractIpApi() {
@@ -45,6 +46,17 @@ void TestIpLocator::badJsonReturnsFalse() {
 
 void TestIpLocator::fallbackNonEmpty() {
     QVERIFY(!IpLocator::compiledDefault().isEmpty());
+}
+
+void TestIpLocator::compiledDefaultIsHttps() {
+    // Regression guard: macOS App Transport Security blocks plain HTTP, so every
+    // built-in fallback service MUST be https:// or IP lookup fails on macOS.
+    const auto services = IpLocator::compiledDefault();
+    QVERIFY(!services.isEmpty());
+    for (const IpService &s : services)
+        QVERIFY2(s.url.startsWith(QStringLiteral("https://")),
+                 qPrintable(QStringLiteral("Non-HTTPS built-in service blocked by macOS ATS: %1 -> %2")
+                                .arg(s.name, s.url)));
 }
 
 QTEST_MAIN(TestIpLocator)
